@@ -1,1 +1,3 @@
-# SRA
+# Self-Rule to Adapt (SRA)
+
+...
