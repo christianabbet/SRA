@@ -25,17 +25,36 @@ baselines across unsupervised and self-supervised domain adaptation settings.
 
 ![Segmentation result](figs/pipeline+loss_graph.png)
 
-## Installation
-we used:
+## Requirements
+Dataset:
+* [Kather16](https://zenodo.org/record/53169): Collection of textures in colorectal cancer 
+histology containing 5000 histological images
+* [Kather19](https://zenodo.org/record/1214456): 100,000 histological images of human colorectal cancer 
+and healthy tissue
+
+Python
 * pytorch = 1.2.0
 * torchvision = 0.4.0
 
 
 ## Usage
+The pre-trained (Kather19 to Kather16) model is available on the google drive [link](TODO). 
 
+To train the model :
+```bash
+python train_sra.py ...
+```
+To evaluate and plot t-SNE.
+```bash
+python eval_sra.py ...
+```
 ...
 
 ## Results
+
+We present the t-SNE projection of the results of domain adaptation processes from Kather19 
+to Kather16.
+![Kather19 to Kather16](figs/tsne_k19k16.png)
 
 To validate our approach on real case scenario, we perform domain adaptation using our 
 proposed model from [Kather19](https://zenodo.org/record/1214456) to whole slide image 
