@@ -1,6 +1,6 @@
 # Self-Rule to Adapt (SRA)
 
-Pytorch implementation of [SRA]()
+Pytorch implementation of [SRA](TODO)
 
 
 Acquiring large amounts of labeled data is often not feasible in medical image analysis, 
@@ -26,10 +26,13 @@ baselines across unsupervised and self-supervised domain adaptation settings.
 ![Segmentation result](figs/pipeline+loss_graph.png)
 
 ## Requirements
+The implementation extended from the implementation of MoCoV2 ([paper](https://arxiv.org/abs/2003.04297), 
+[code](https://github.com/facebookresearch/moco)).
+ 
 Dataset:
 * [Kather16](https://zenodo.org/record/53169): Collection of textures in colorectal cancer 
 histology containing 5000 histological images
-* [Kather19](https://zenodo.org/record/1214456): 100,000 histological images of human colorectal cancer 
+* [Kather19 - NCT-CRC-HE-100K](https://zenodo.org/record/1214456): 100,000 histological images of human colorectal cancer 
 and healthy tissue
 
 Python
@@ -44,11 +47,13 @@ To train the model :
 ```bash
 python train_sra.py ...
 ```
+
 To evaluate and plot t-SNE.
 ```bash
-python eval_sra.py ...
+python eval_sra.py --src_name kather19 --src_path /path/to/kather19 \
+                    --tar_name kather16 --tar_path /path/to/kather16
 ```
-...
+
 
 ## Results
 
@@ -57,7 +62,7 @@ to Kather16.
 ![Kather19 to Kather16](figs/tsne_k19k16.png)
 
 To validate our approach on real case scenario, we perform domain adaptation using our 
-proposed model from [Kather19](https://zenodo.org/record/1214456) to whole slide image 
+proposed model from Kather19 to whole slide image 
 sections from our in-house dataset. The results are presented here, alongside the original 
 H&E image, their corresponding labels annotated by an expert pathologist, as well as 
 comparative results of previous approaches smoothed using conditional random fields as 
