@@ -51,9 +51,9 @@ python train_sra.py ...
 To evaluate and plot t-SNE.
 ```bash
 python eval_sra.py --src_name kather19 --src_path /path/to/kather19 \
-                    --tar_name kather16 --tar_path /path/to/kather16
+                    --tar_name kather16 --tar_path /path/to/kather16 \
+                    --checkpoint /path/to/checkpoint.pth.tar
 ```
-
 
 ## Results
 

@@ -12,18 +12,16 @@ def plot_embedding(embedding, cls, cls_labels, filename, vrange=None):
             [1.0, 0.6, 0.333],  # Orange (src)
             [0.267, 0.667, 0.0],  # Green (target)
         ], N=2)
-        alpha = 0.9
+        alpha = 0.8
     else:
         cmap ='Set1'
-        alpha = 0.9
+        alpha = 0.8
 
     # First generate empty version for latex
-    plt.figure(figsize=(12, 10))
+    plt.figure(figsize=(8, 6))
     id_rnd = np.random.permutation(len(cls))
-    plt.scatter(embedding[id_rnd, 0], embedding[id_rnd, 1], s=10, c=cls[id_rnd], alpha=alpha, cmap=cmap)
-    plt.axis('off')
+    plt.scatter(embedding[id_rnd, 0], embedding[id_rnd, 1], s=7, c=cls[id_rnd], alpha=alpha, cmap=cmap)
     plt.axes().set_aspect('equal')
-    plt.savefig(filename+"_empty.jpeg", bbox_inches='tight')
 
     # Then add content for debugging
     cax = plt.colorbar(boundaries=np.arange(max(2, n_labels) + 1) - 0.5)
