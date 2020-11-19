@@ -4,8 +4,8 @@ import torch.nn as nn
 
 class SRA(nn.Module):
     """
-    Build a MoCo model with: a query encoder, a key encoder, and a queue
-    https://arxiv.org/abs/1911.05722
+    Build a SRA based on MoCo (https://arxiv.org/abs/1911.05722) model with: a query encoder, a key encoder,
+    and a queue.
     """
     def __init__(self, base_encoder, dim=128, K=65536, m=0.999, T=0.07, mlp=True):
         """
@@ -34,7 +34,7 @@ class SRA(nn.Module):
             param_k.data.copy_(param_q.data)  # initialize
             param_k.requires_grad = False  # not update by gradient
 
-        # create the queue
+        # create the queue for samples and dataset labls
         self.register_buffer("queue", torch.randn(dim, K))
         self.register_buffer("queue_dataset", torch.randint(2, size=(K,)))
         self.queue = nn.functional.normalize(self.queue, dim=0)
@@ -72,10 +72,15 @@ class SRA(nn.Module):
             im_k: a batch of key images
             d_set: a batch of dataset assignation (src=0, tar=1)
         Output:
-            logits_ind_d0, labels_ind_d0, logits_ind_d1, labels_ind_d1, h_crd_d0tod1, h_crd_d1tod0
+            logits_ind_d0:  logits for in-domain loss over source (d0) samples
+            labels_ind_d0:  labels for in-domain loss over source (d0) samples
+            logits_ind_d1:  logits for in-domain loss over target (d1) samples
+            labels_ind_d1:  label for in-domain loss over target (d1) samples
+            h_crd_d0tod1:   entropy measure for cross-domain loss from source (d0) to target (d1)
+            h_crd_d1tod0:   entropy measure for cross-domain loss from target (d1) to source (d0)
         """
 
-        # compute query features
+        # compute query features and normalize
         q = self.encoder_q(im_q)  # queries: NxC
         q = nn.functional.normalize(q, dim=1)
 
@@ -106,7 +111,7 @@ class SRA(nn.Module):
         labels_ind_d0 = torch.zeros(logits_ind_d0.shape[0], dtype=torch.long).cuda()
         labels_ind_d1 = torch.zeros(logits_ind_d1.shape[0], dtype=torch.long).cuda()
 
-        # 2. Across-domain self-supervision
+        # 2. Cross-domain self-supervision
         h_crd_d0tod1 = self.compute_h_crd(q=q[d_set == 0],
                                           queue=queue[:, queue_dataset == 1])
         h_crd_d1tod0 = self.compute_h_crd(q=q[d_set == 1],

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import argparse
 import os
-import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
@@ -25,6 +24,7 @@ model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
     and callable(models.__dict__[name]))
 
+# Main arguments (mandatory)
 parser = argparse.ArgumentParser(description='SRA evaluation process')
 parser.add_argument('--src_name', type=str, default="kather19",
                     choices=["kather16", "kather19"],
@@ -39,6 +39,7 @@ parser.add_argument('--tar_path', type=str, default="",
 parser.add_argument('--checkpoint', default='', type=str,
                     help='path to latest checkpoint (default: none)')
 
+# Additional arguments (optional)
 parser.add_argument('--seed', default=0, type=int,
                     help='seed for initializing training. ')
 parser.add_argument('--gpu', default=0, type=int,
@@ -51,13 +52,13 @@ parser.add_argument('-a', '--arch', metavar='ARCH',
                         ' (default: resnet18)')
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
-parser.add_argument('-b', '--batch-size', default=16, type=int,
+parser.add_argument('-b', '--batch-size', default=128, type=int,
                     metavar='N',
                     help='mini-batch size (default: 256), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
 
-# MoCoV2 specific configs:
+# MoCoV2 related-specific configs:
 parser.add_argument('--moco-dim', default=128, type=int,
                     help='feature dimension (default: 128)')
 parser.add_argument('--moco-k', default=65536, type=int,
@@ -103,7 +104,7 @@ def main():
         tar_trainval_dataset, batch_size=args.batch_size, shuffle=False,
         num_workers=args.workers, pin_memory=True, drop_last=False)
 
-    # Build model and load model weights
+    # Build model
     print("******** Building model ********")
     print("Creating model with backbone '{}'".format(args.arch))
     model = sra.builder.SRA(
@@ -128,11 +129,12 @@ def main():
               .format(state, args.checkpoint, checkpoint['epoch']))
     else:
         print("=> no checkpoint found at '{}'".format(args.checkpoint))
+        exit()
 
-    # Compute embedding space
+    # Compute embedding space if needed
     filename_embedding = os.path.join("sra_eval_{}_to_{}.npy".format(args.src_name, args.tar_name))
     if not os.path.exists(filename_embedding):
-        print("Compute inference ....")
+        print("Inference ....")
         dsrc_feat, dsrc_lab = eval(src_train_loader, model, len(src_trainval_dataset), args)
         dtar_feat, dtar_lab = eval(tar_train_loader, model, len(tar_trainval_dataset), args)
 
@@ -146,13 +148,14 @@ def main():
         }
         np.save(filename_embedding, data)
 
+    # Reload data (for consistency and to save time)
     print("Load embedding {} ....".format(filename_embedding))
     n_tsne = 10000
     data = np.load(filename_embedding, allow_pickle=True).item()
     q_feat, q_lab = data['dsrc_feat'], data['dsrc_lab']
     k_feat, k_lab = data['dtar_feat'], data['dtar_lab']
 
-    # Fit TSNE with both
+    # Fit t-SNE with both source and target data
     n_feat_subset = np.min([n_tsne, q_feat.shape[0], k_feat.shape[0]])
     data['id_data_d0'] = np.random.RandomState(seed=args.seed).permutation(q_feat.shape[0])[:n_feat_subset]
     data['id_data_d1'] = np.random.RandomState(seed=args.seed).permutation(k_feat.shape[0])[:n_feat_subset]
@@ -190,18 +193,19 @@ def main():
 
 def eval(eval_loader, model, n, args):
 
-    # switch to eval mode
+    # Switch to eval mode and select encoder output
     model_encoder = model.encoder_q
     model_encoder.eval()
     labels = np.zeros(n)
     outputs = np.zeros((n, args.moco_dim))
 
+    # Iterate over dataset
     for i, (images, label) in tqdm(enumerate(eval_loader), total=len(eval_loader)):
 
         if args.gpu is not None:
             images = images.cuda(args.gpu, non_blocking=True)
 
-        # compute output
+        # compute embedding output
         output = model_encoder(images)
         output = nn.functional.normalize(output, dim=1)
 

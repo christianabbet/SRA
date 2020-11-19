@@ -1,6 +1,6 @@
 # Self-Rule to Adapt (SRA)
 
-Pytorch implementation of [SRA](TODO)
+Pytorch implementation of [Self-Rule tp Adapt (SRA)](TODO).
 
 
 Acquiring large amounts of labeled data is often not feasible in medical image analysis, 
@@ -41,7 +41,8 @@ Python
 
 
 ## Usage
-The pre-trained (Kather19 to Kather16) model is available on the google drive [link](TODO). 
+The pre-trained (Kather19 to Kather16) model is available on the google 
+drive ([link](https://drive.google.com/drive/folders/1_4qa2JJPqMvEq6FgoTnmzkvPVgzQWma7?usp=sharing)). 
 
 To train the model :
 ```bash
