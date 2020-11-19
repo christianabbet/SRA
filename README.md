@@ -44,12 +44,13 @@ Python
 The pre-trained (Kather19 to Kather16) model is available on the google 
 drive ([link](https://drive.google.com/drive/folders/1_4qa2JJPqMvEq6FgoTnmzkvPVgzQWma7?usp=sharing)). 
 
-To train the model :
+To train the model:
 ```bash
-python train_sra.py ...
+python train_sra.py --src_name kather19 --src_path /path/to/kather19 \
+                    --tar_name kather16 --tar_path /path/to/kather16 
 ```
 
-To evaluate and plot t-SNE.
+To evaluate (generate embedding) and plot t-SNE projection:
 ```bash
 python eval_sra.py --src_name kather19 --src_path /path/to/kather19 \
                     --tar_name kather16 --tar_path /path/to/kather16 \
@@ -71,3 +72,12 @@ in [L. Chan](https://github.com/lyndonchan/hsn_v1) (2018). The sections were sel
 overall, they represent all tissue types equally.
 
 ![Segmentation result](figs/seg_wsi.png)
+
+## Citation
+
+If you use this work please use the following citation :).
+
+```text
+TBD
+```
+
