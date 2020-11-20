@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import numpy as np
 import math
+import torch
 
 
 def plot_embedding(embedding, cls, cls_labels, filename, vrange=None):
