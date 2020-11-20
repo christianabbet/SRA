@@ -172,7 +172,6 @@ def main():
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
-    batch_time = AverageMeter('Time', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
     losses_ind = AverageMeter('LossIND', ':.4e')
     losses_crd = AverageMeter('LossCRD', ':.4e')
@@ -181,12 +180,12 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
     progress = ProgressMeter(
         len(train_loader),
-        [batch_time, losses, losses_ind, losses_crd, top1_d0, top1_d1],
+        [losses, losses_ind, losses_crd, top1_d0, top1_d1],
         prefix="Epoch: [{}]".format(epoch))
 
     # Compute simple to hard ratio
     s2h_topk_r = np.floor(epoch/(args.sw*args.epochs))*args.sh
-    print('Consider top: {}%'.format(s2h_topk_r*100))
+    print('Simple-to-hard consider top: {}%'.format(s2h_topk_r*100))
 
     for i, (images, d_set) in enumerate(train_loader):
         # images[0]: key, image[1]: query, d_set: label source (0) or target (1)
