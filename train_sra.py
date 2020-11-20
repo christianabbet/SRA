@@ -194,7 +194,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             d_set = d_set.cuda(args.gpu, non_blocking=True)
 
         # compute output
-        l_ind_d0, t_ind_d0, l_ind_d1, t_ind_d1, h_crd_d0tod1, h_crd_d1tod0 = model(im_q=images[0], im_k=images[1], dset=d_set)
+        l_ind_d0, t_ind_d0, l_ind_d1, t_ind_d1, h_crd_d0tod1, h_crd_d1tod0 = model(im_q=images[0], im_k=images[1], d_set=d_set)
 
         # 1. In-domain Self-supervision
         loss_ind_d0 = criterion(l_ind_d0, t_ind_d0)
