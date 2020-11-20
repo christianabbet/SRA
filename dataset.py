@@ -22,13 +22,15 @@ def load_kather19(transforms_train, transforms_test, **args):
     testdir = os.path.join(args.get('data', ''), 'CRC-VAL-HE-7K')
 
     trainval_dataset = datasets.ImageFolder(
-        traindir, transforms_train,
-        is_valid_file=lambda f: f.endswith(".jpeg")
+        traindir,
+        transform=transforms_train,
+        is_valid_file=lambda f: f.endswith(".tif")
     )
 
     test_dataset = datasets.ImageFolder(
-        testdir, transforms_test,
-        is_valid_file=lambda f: f.endswith(".jpeg")
+        testdir,
+        transform=transforms_test,
+        is_valid_file=lambda f: f.endswith(".tif")
     )
 
     return test_dataset.class_to_idx, trainval_dataset, test_dataset
@@ -37,10 +39,14 @@ def load_kather19(transforms_train, transforms_test, **args):
 def load_kather16(transforms_train, transforms_test, ratio=0.3, **args):
 
     trainval_dataset = datasets.ImageFolder(
-        args.get('data', ''), transform=transforms_train,
+        args.get('data', ''),
+        transform=transforms_train,
+        is_valid_file=lambda f: f.endswith(".tif")
     )
     test_dataset = datasets.ImageFolder(
-        args.get('data', ''), transform=transforms_test,
+        args.get('data', ''),
+        transform=transforms_test,
+        is_valid_file=lambda f: f.endswith(".tif")
     )
 
     rnd = np.random.RandomState(seed=args.get('seed', 0))
