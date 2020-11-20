@@ -202,11 +202,14 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         loss_ind = (1/args.batch_size)*(loss_ind_d0 + loss_ind_d1)
 
         # 2. Cross-domain self-supervision
-        h_crd_d0tod1 = h_crd_d0tod1[h_crd_d0tod1.argsort()[:int(s2h_topk_r*len(h_crd_d0tod1))]]
-        h_crd_d1tod0 = h_crd_d1tod0[h_crd_d1tod0.argsort()[:int(s2h_topk_r*len(h_crd_d1tod0))]]
-        loss_crd_d0tod1 = h_crd_d0tod1.sum(dim=0)
-        loss_crd_d1tod0 = h_crd_d1tod0.sum(dim=0)
-        loss_crd = (1 / (args.batch_size*s2h_topk_r)) * (loss_crd_d0tod1 + loss_crd_d1tod0)
+        if s2h_topk_r != 0:
+            h_crd_d0tod1 = h_crd_d0tod1[h_crd_d0tod1.argsort()[:int(s2h_topk_r*len(h_crd_d0tod1))]]
+            h_crd_d1tod0 = h_crd_d1tod0[h_crd_d1tod0.argsort()[:int(s2h_topk_r*len(h_crd_d1tod0))]]
+            loss_crd_d0tod1 = h_crd_d0tod1.sum(dim=0)
+            loss_crd_d1tod0 = h_crd_d1tod0.sum(dim=0)
+            loss_crd = (1 / (args.batch_size*s2h_topk_r)) * (loss_crd_d0tod1 + loss_crd_d1tod0)
+        else:
+            loss_crd = torch.zeros(1).cuda(args.gpu, non_blocking=True)
 
         # 3. Overall loss
         loss = loss_ind + loss_crd
