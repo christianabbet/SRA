@@ -30,12 +30,14 @@ parser.add_argument('--src_name', type=str, default="kather19",
                     choices=["kather16", "kather19"],
                     help='Name of the source dataset')
 parser.add_argument('--src_path', type=str, default="",
-                    help='path to source dataset')
+                    help='path to source dataset. For Kather19, root folder should contain CRC-VAL-HE-7K (test) and'
+                         ' NCT-CRC-HE-100K (train/val). For Kather16, should contain class folders')
 parser.add_argument('--tar_name', type=str, default="kather16",
                     choices=["kather16", "kather19"],
                     help='Name of the target dataset')
 parser.add_argument('--tar_path', type=str, default="",
-                    help='path to target dataset')
+                    help='path to source dataset. For Kather19, root folder should contain CRC-VAL-HE-7K (test) and'
+                         ' NCT-CRC-HE-100K (train/val). For Kather16, should contain class folders')
 parser.add_argument('--checkpoint', default='', type=str,
                     help='path to latest checkpoint (default: none)')
 
@@ -134,11 +136,11 @@ def main():
     # Compute embedding space if needed
     filename_embedding = os.path.join("sra_eval_{}_to_{}.npy".format(args.src_name, args.tar_name))
     if not os.path.exists(filename_embedding):
-        print("Inference ....")
+        print("Inference ...")
         dsrc_feat, dsrc_lab = eval(src_train_loader, model, len(src_trainval_dataset), args)
         dtar_feat, dtar_lab = eval(tar_train_loader, model, len(tar_trainval_dataset), args)
 
-        print("Save embedding ....")
+        print("Save embedding ...")
         data = {
             "checkpoint": args.checkpoint,
             "src_class_to_idx": src_class_to_idx,
@@ -149,13 +151,14 @@ def main():
         np.save(filename_embedding, data)
 
     # Reload data (for consistency and to save time)
-    print("Load embedding {} ....".format(filename_embedding))
+    print("Load embedding {} ...".format(filename_embedding))
     n_tsne = 10000
     data = np.load(filename_embedding, allow_pickle=True).item()
     q_feat, q_lab = data['dsrc_feat'], data['dsrc_lab']
     k_feat, k_lab = data['dtar_feat'], data['dtar_lab']
 
     # Fit t-SNE with both source and target data
+    print("Fit t-SNE ...")
     n_feat_subset = np.min([n_tsne, q_feat.shape[0], k_feat.shape[0]])
     data['id_data_d0'] = np.random.RandomState(seed=args.seed).permutation(q_feat.shape[0])[:n_feat_subset]
     data['id_data_d1'] = np.random.RandomState(seed=args.seed).permutation(k_feat.shape[0])[:n_feat_subset]

@@ -28,12 +28,14 @@ parser.add_argument('--src_name', type=str, default="kather19",
                     choices=["kather16", "kather19"],
                     help='Name of the source dataset')
 parser.add_argument('--src_path', type=str, default="",
-                    help='path to source dataset')
+                    help='path to source dataset. For Kather19, root folder should contain CRC-VAL-HE-7K (test) and'
+                         ' NCT-CRC-HE-100K (train/val). For Kather16, should contain class folders')
 parser.add_argument('--tar_name', type=str, default="kather16",
                     choices=["kather16", "kather19"],
                     help='Name of the target dataset')
 parser.add_argument('--tar_path', type=str, default="",
-                    help='path to target dataset')
+                    help='path to source dataset. For Kather19, root folder should contain CRC-VAL-HE-7K (test) and'
+                         ' NCT-CRC-HE-100K (train/val). For Kather16, should contain class folders')
 parser.add_argument('--checkpoint', default='', type=str,
                     help='path to latest checkpoint (default: none)')
 
@@ -150,7 +152,7 @@ def main():
 
     print("******** Define criterion and optimizer ********")
     filename = "checkpoint_{}+{}_sra".format(args.src_name, args.tar_name)
-    criterion = nn.CrossEntropyLoss().cuda(args.gpu)
+    criterion = nn.CrossEntropyLoss(reduction='sum').cuda(args.gpu)
     optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                 momentum=args.momentum,
                                 weight_decay=args.weight_decay)
@@ -185,7 +187,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
     # Compute simple to hard ratio
     s2h_topk_r = np.floor(epoch/(args.sw*args.epochs))*args.sh
-    print('Simple-to-hard consider top: {}%'.format(s2h_topk_r*100))
+    print('Simple-to-hard consider top: {:.1f}%'.format(s2h_topk_r*100))
 
     for i, (images, d_set) in enumerate(train_loader):
         # images[0]: key, image[1]: query, d_set: label source (0) or target (1)
