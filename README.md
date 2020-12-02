@@ -38,7 +38,7 @@ and healthy tissue
 Python
 * pytorch = 1.2.0
 * torchvision = 0.4.0
-
+* tensorboard = 1.14.0
 
 ## Usage
 The pre-trained (Kather19 to Kather16) model is available on the google 

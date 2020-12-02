@@ -10,6 +10,9 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.models as models
+from torch.utils.tensorboard import SummaryWriter
+from datetime import date
+import os
 
 import sra.builder
 import sra.loader
@@ -41,41 +44,41 @@ parser.add_argument('--checkpoint', default='', type=str,
 
 # Additional arguments (optional)
 parser.add_argument('--seed', default=0, type=int,
-                    help='seed for initializing training. ')
+                    help='seed for initializing training (default: 0)')
 parser.add_argument('--gpu', default=0, type=int,
-                    help='GPU id to use.')
-parser.add_argument('-a', '--arch', metavar='ARCH',
+                    help='GPU id to use (default: 0)')
+parser.add_argument('--arch',
                     default='resnet18',
                     choices=model_names,
                     help='model architecture: ' +
                         ' | '.join(model_names) +
-                        ' (default: resnet18)')
-parser.add_argument('--checkpoint_epochs', default=50, type=int, metavar='N',
-                    help='manual epoch number (useful on restarts)')
-parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
+                        ' (default/supported: resnet18)')
+parser.add_argument('--checkpoint_epochs', default=50, type=int,
+                    help='Epochs before checkpoint (default: 50)')
+parser.add_argument('--workers', default=4, type=int,
                     help='number of data loading workers (default: 4)')
-parser.add_argument('-b', '--batch-size', default=128, type=int,
-                    metavar='N',
-                    help='mini-batch size (default: 256), this is the total '
-                         'batch size of all GPUs on the current node when '
-                         'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('--epochs', default=200, type=int, metavar='N',
-                    help='number of total epochs to run')
+parser.add_argument('--batch_size', default=128, type=int,
+                    help='mini-batch size (default: 128)')
+parser.add_argument('--epochs', default=200, type=int,
+                    help='number of total epochs to run (default: 200)')
 parser.add_argument('--num_samples', type=int, default=100000,
-                    help='Number of samples to draw from dataset per epoch')
-parser.add_argument('--sh', default=0.2, type=int, metavar='N',
-                    help='Simple to hard height for step function update')
-parser.add_argument('--sw', default=0.25, type=float, metavar='N',
-                    help='Simple to hard width for step function update')
-parser.add_argument('--lr', '--learning-rate', default=0.03, type=float,
-                    metavar='LR', help='initial learning rate', dest='lr')
-parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
-                    help='momentum of SGD solver')
-parser.add_argument('--wd', '--weight-decay', default=1e-4, type=float,
-                    metavar='W', help='weight decay (default: 1e-4)',
-                    dest='weight_decay')
-parser.add_argument('-p', '--print-freq', default=100, type=int,
-                    metavar='N', help='print frequency (default: 10)')
+                    help='Number of samples to draw from dataset per epoch (default: 100000)')
+parser.add_argument('--sh', default=0.2, type=float,
+                    help='Simple to hard height for step function update (default: 0.2)')
+parser.add_argument('--sw', default=0.25, type=float,
+                    help='Simple to hard width for step function update (default: 0.25)')
+parser.add_argument('--lr', default=0.03, type=float,
+                    help='initial learning rate (default: 0.03)')
+parser.add_argument('--momentum', default=0.9, type=float,
+                    help='momentum of SGD solver (default: 0.9)')
+parser.add_argument('--weight_decay', default=1e-4, type=float,
+                    help='weight decay (default: 1e-4)')
+parser.add_argument('--print-freq', default=100, type=int,
+                    help='print frequency as as a function of batchsize/numsamples (default: 100)')
+
+# Logging
+parser.add_argument('--exp_name', default='exp', type=str,
+                    help='Name of the experiment (default: exp)')
 
 # MoCoV2 related-specific configs:
 parser.add_argument('--moco-dim', default=128, type=int,
@@ -85,9 +88,7 @@ parser.add_argument('--moco-k', default=65536, type=int,
 parser.add_argument('--moco-m', default=0.999, type=float,
                     help='moco momentum of updating key encoder (default: 0.999)')
 parser.add_argument('--moco-t', default=0.2, type=float,
-                    help='softmax temperature (default: 0.07)')
-parser.add_argument('--schedule', default=[120, 160], nargs='*', type=int,
-                    help='learning rate schedule (when to drop lr by 10x)')
+                    help='softmax temperature (default: 0.2)')
 parser.add_argument('--cos', action='store_true',
                     default=True,
                     help='use cosine lr schedule')
@@ -151,25 +152,34 @@ def main():
     model = model.cuda(args.gpu)
 
     print("******** Define criterion and optimizer ********")
-    filename = "checkpoint_{}+{}_sra".format(args.src_name, args.tar_name)
+    run_folder = os.path.join("runs", "{}_{}".format(date.today(), args.exp_name))
+    filename = "checkpoint_{}_sra".format(args.src_name, args.exp_name)
     criterion = nn.CrossEntropyLoss(reduction='sum').cuda(args.gpu)
     optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                 momentum=args.momentum,
                                 weight_decay=args.weight_decay)
 
+    writer = SummaryWriter(log_dir=run_folder)
+
     for epoch in range(args.epochs):
 
         adjust_learning_rate(optimizer, epoch, args)
-        # train for one epoch
-        train(train_loader, model, criterion, optimizer, epoch, args)
+        l, l_ind, l_crd, top10, top11, top50, top51 = train(train_loader, model, criterion, optimizer, epoch, args)
+
+        writer.add_scalar('Loss', l, epoch)
+        writer.add_scalar('LossIND', l_ind, epoch)
+        writer.add_scalar('LossCRD', l_crd, epoch)
+        writer.add_scalars('Top1', {'train_d0': top10, 'train_d1': top11}, epoch)
+        writer.add_scalars('Top5', {'train_d0': top50, 'train_d1': top51}, epoch)
+        writer.add_scalar('LR/train', optimizer.param_groups[0]['lr'], epoch)
 
         if (epoch+1) % args.checkpoint_epochs == 0:
             print('Saving model epoch: {}'.format(epoch))
             torch.save({
                 'epoch': epoch + 1,
-                'arch': args.arch,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
+                'args': args.__dict__,
             }, f='{}_{:04d}.pth.tar'.format(filename, epoch))
 
 
@@ -179,6 +189,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     losses_crd = AverageMeter('LossCRD', ':.4e')
     top1_d0 = AverageMeter('AccD0@1', ':6.2f')
     top1_d1 = AverageMeter('AccD1@1', ':6.2f')
+    top5_d0 = AverageMeter('AccD0@5', ':6.2f')
+    top5_d1 = AverageMeter('AccD1@5', ':6.2f')
 
     progress = ProgressMeter(
         len(train_loader),
@@ -225,7 +237,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         losses.update(loss.item(), images[0].size(0))
         top1_d0.update(acc1d0[0], images[0].size(0))
         top1_d1.update(acc1d1[0], images[0].size(0))
-
+        top5_d0.update(acc5d0[0], images[0].size(0))
+        top5_d1.update(acc5d1[0], images[0].size(0))
         # 5. Compute gradient and do SGD step
         optimizer.zero_grad()
         loss.backward()
@@ -233,6 +246,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
         if i % args.print_freq == 0:
             progress.display(i)
+
+    return losses.avg, losses_ind.avg, losses_crd.avg, top1_d0.avg, top1_d1.avg, top5_d0.avg, top5_d1.avg
 
 
 if __name__ == '__main__':
