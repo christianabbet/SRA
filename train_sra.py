@@ -75,7 +75,10 @@ parser.add_argument('--weight_decay', default=1e-4, type=float,
                     help='weight decay (default: 1e-4)')
 parser.add_argument('--print-freq', default=100, type=int,
                     help='print frequency as as a function of batchsize/numsamples (default: 100)')
-
+parser.add_argument('--use_hema', action='store_true', default=False,
+                    help='Remove use of additional constrain on hematoxylin channel')
+parser.add_argument('--lambda_hema', default=10., type=float,
+                    help='lambda factor in when adding to loss, only with use_hema (default: 10.)')
 # Logging
 parser.add_argument('--exp_name', default='exp', type=str,
                     help='Name of the experiment (default: exp)')
@@ -99,28 +102,32 @@ def main():
     cudnn.benchmark = True
 
     print("******** Define augmentation ********")
-    augmentation = [
+    augmentation_base = transforms.Compose([
         transforms.RandomResizedCrop(224, scale=(0.2, 1.)),
-        transforms.RandomGrayscale(p=0.2),
-        transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
         transforms.RandomHorizontalFlip(),
+        transforms.RandomVerticalFlip(),
+    ])
+
+    augmentation_adv = transforms.Compose([
+        transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
+        transforms.RandomGrayscale(p=0.2),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
                              std=[0.229, 0.224, 0.225])
-    ]
+    ])
 
     print("******** Loading datasets ********")
     # Load source dataset
     _, src_dataset, _ = load_dataset(
-        transforms_train=sra.loader.TwoCropsTransform(transforms.Compose(augmentation)),
-        transforms_test=sra.loader.TwoCropsTransform(transforms.Compose(augmentation)),
+        transforms_train=sra.loader.TwoCropsTransform(augmentation_base, augmentation_adv, return_hema=args.use_hema),
+        transforms_test=None,
         **{'data': args.src_path, 'dataset': args.src_name, 'seed': args.seed}
     )
 
     # Load target dataset
     _, tar_dataset, _ = load_dataset(
-        transforms_train=sra.loader.TwoCropsTransform(transforms.Compose(augmentation)),
-        transforms_test=sra.loader.TwoCropsTransform(transforms.Compose(augmentation)),
+        transforms_train=sra.loader.TwoCropsTransform(augmentation_base, augmentation_adv, return_hema=args.use_hema),
+        transforms_test=None,
         **{'data': args.tar_path, 'dataset': args.tar_name, 'seed': args.seed}
     )
 
@@ -145,7 +152,7 @@ def main():
     print("Creating model with backbone '{}'".format(args.arch))
     model = sra.builder.SRA(
         models.__dict__[args.arch],
-        args.moco_dim, args.moco_k, args.moco_m, args.moco_t)
+        args.moco_dim, args.moco_k, args.moco_m, args.moco_t, args.use_hema)
 
     print('Use GPU {}'.format(args.gpu))
     torch.cuda.set_device(args.gpu)
@@ -154,21 +161,25 @@ def main():
     print("******** Define criterion and optimizer ********")
     run_folder = os.path.join("runs", "{}_{}".format(date.today(), args.exp_name))
     filename = "checkpoint_{}_sra".format(args.src_name, args.exp_name)
-    criterion = nn.CrossEntropyLoss(reduction='sum').cuda(args.gpu)
+    criterion_ss = nn.CrossEntropyLoss(reduction='sum').cuda(args.gpu)
+    criterion_hema = nn.L1Loss().cuda(args.gpu)
     optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                 momentum=args.momentum,
                                 weight_decay=args.weight_decay)
 
     writer = SummaryWriter(log_dir=run_folder)
+    print_e2h(args)
 
     for epoch in range(args.epochs):
 
         adjust_learning_rate(optimizer, epoch, args)
-        l, l_ind, l_crd, top10, top11, top50, top51 = train(train_loader, model, criterion, optimizer, epoch, args)
+        l, l_ind, l_crd, l_hema, top10, top11, top50, top51 = train(train_loader, model, criterion_ss,
+                                                                    criterion_hema, optimizer, epoch, args)
 
         writer.add_scalar('Loss', l, epoch)
         writer.add_scalar('LossIND', l_ind, epoch)
         writer.add_scalar('LossCRD', l_crd, epoch)
+        writer.add_scalar('LossHema', l_hema, epoch)
         writer.add_scalars('Top1', {'train_d0': top10, 'train_d1': top11}, epoch)
         writer.add_scalars('Top5', {'train_d0': top50, 'train_d1': top51}, epoch)
         writer.add_scalar('LR/train', optimizer.param_groups[0]['lr'], epoch)
@@ -183,18 +194,24 @@ def main():
             }, f='{}_{:04d}.pth.tar'.format(filename, epoch))
 
 
-def train(train_loader, model, criterion, optimizer, epoch, args):
-    losses = AverageMeter('Loss', ':.4e')
-    losses_ind = AverageMeter('LossIND', ':.4e')
-    losses_crd = AverageMeter('LossCRD', ':.4e')
+def train(train_loader, model, criterion_ss, criterion_hema, optimizer, epoch, args):
+    losses = AverageMeter('Loss', ':.3e')
+    losses_ind = AverageMeter('LossIND', ':.3e')
+    losses_crd = AverageMeter('LossCRD', ':.3e')
+    losses_hema = AverageMeter('LossHema', ':.3e')
     top1_d0 = AverageMeter('AccD0@1', ':6.2f')
     top1_d1 = AverageMeter('AccD1@1', ':6.2f')
     top5_d0 = AverageMeter('AccD0@5', ':6.2f')
     top5_d1 = AverageMeter('AccD1@5', ':6.2f')
 
+    if args.use_hema:
+        l_list = [losses, losses_ind, losses_crd, losses_hema, top1_d0, top1_d1]
+    else:
+        l_list = [losses, losses_ind, losses_crd, top1_d0, top1_d1],
+
     progress = ProgressMeter(
         len(train_loader),
-        [losses, losses_ind, losses_crd, top1_d0, top1_d1],
+        l_list,
         prefix="Epoch: [{}]".format(epoch))
 
     # Compute simple to hard ratio
@@ -202,18 +219,28 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     print('Simple-to-hard consider top: {:.1f}%'.format(s2h_topk_r*100))
 
     for i, (images, d_set) in enumerate(train_loader):
-        # images[0]: key, image[1]: query, d_set: label source (0) or target (1)
+        # images[0]: key, image[1]: query, image[2]: key_hema, image[3]: query_hema
+        # d_set: label source (0) or target (1)
+
+        # Check if batch is composed of tissue from different sources
+        if d_set.sum() == 0 or d_set.sum() == args.batch_size:
+            continue
+
         if args.gpu is not None:
             images[0] = images[0].cuda(args.gpu, non_blocking=True)
             images[1] = images[1].cuda(args.gpu, non_blocking=True)
             d_set = d_set.cuda(args.gpu, non_blocking=True)
+            if args.use_hema:
+                # Only consider q transform
+                images[2] = images[2].cuda(args.gpu, non_blocking=True)
 
-        # compute output
-        l_ind_d0, t_ind_d0, l_ind_d1, t_ind_d1, h_crd_d0tod1, h_crd_d1tod0 = model(im_q=images[0], im_k=images[1], d_set=d_set)
+        l_ind_d0, t_ind_d0, l_ind_d1, t_ind_d1, h_crd_d0tod1, h_crd_d1tod0, l_hema = model(im_q=images[0],
+                                                                                           im_k=images[1],
+                                                                                           d_set=d_set)
 
         # 1. In-domain Self-supervision
-        loss_ind_d0 = criterion(l_ind_d0, t_ind_d0)
-        loss_ind_d1 = criterion(l_ind_d1, t_ind_d1)
+        loss_ind_d0 = criterion_ss(l_ind_d0, t_ind_d0)
+        loss_ind_d1 = criterion_ss(l_ind_d1, t_ind_d1)
         loss_ind = (1/args.batch_size)*(loss_ind_d0 + loss_ind_d1)
 
         # 2. Cross-domain self-supervision
@@ -229,16 +256,23 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # 3. Overall loss
         loss = loss_ind + loss_crd
 
+        # 4. Reconstruction hema
+        if args.use_hema:
+            loss_hema = args.lambda_hema * criterion_hema(l_hema, images[2])
+            loss = loss + loss_hema
+
         # 4. Update metrics
         acc1d0, acc5d0 = accuracy(l_ind_d0, t_ind_d0, topk=(1, 5))
         acc1d1, acc5d1 = accuracy(l_ind_d1, t_ind_d1, topk=(1, 5))
         losses_ind.update(loss_ind.item(), images[0].size(0))
         losses_crd.update(loss_crd.item(), images[0].size(0))
+        losses_hema.update(loss_hema.item(), images[0].size(0))
         losses.update(loss.item(), images[0].size(0))
         top1_d0.update(acc1d0[0], images[0].size(0))
         top1_d1.update(acc1d1[0], images[0].size(0))
         top5_d0.update(acc5d0[0], images[0].size(0))
         top5_d1.update(acc5d1[0], images[0].size(0))
+
         # 5. Compute gradient and do SGD step
         optimizer.zero_grad()
         loss.backward()
@@ -247,7 +281,15 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         if i % args.print_freq == 0:
             progress.display(i)
 
-    return losses.avg, losses_ind.avg, losses_crd.avg, top1_d0.avg, top1_d1.avg, top5_d0.avg, top5_d1.avg
+    return losses.avg, losses_ind.avg, losses_crd.avg, losses_hema.avg, top1_d0.avg, top1_d1.avg, top5_d0.avg, top5_d1.avg
+
+
+def print_e2h(args):
+    es = np.arange(args.epochs)
+    rs = np.floor(es / (args.sw * args.epochs)) * args.sh
+    idx_steps = [np.nonzero(rs == u)[0][0] for u in np.unique(rs)]
+    print("Simple to hard (S2E) stages (epoch: reverse top-k)")
+    print("\t->", " | ".join(["e{}: {:.2f}".format(es[idx], rs[idx]) for idx in idx_steps]))
 
 
 if __name__ == '__main__':

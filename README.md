@@ -46,7 +46,8 @@ drive ([link](https://drive.google.com/drive/folders/1_4qa2JJPqMvEq6FgoTnmzkvPVg
 
 To train the model:
 ```bash
-python train_sra.py --src_name kather19 --src_path /path/to/kather19 \
+python train_sra.py --exp_name kather19+kather16 \
+                    --src_name kather19 --src_path /path/to/kather19 \
                     --tar_name kather16 --tar_path /path/to/kather16 
 ```
 
