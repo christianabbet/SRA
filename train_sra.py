@@ -28,13 +28,13 @@ model_names = sorted(name for name in models.__dict__
 # Main arguments (mandatory)
 parser = argparse.ArgumentParser(description='SRA evaluation process')
 parser.add_argument('--src_name', type=str, default="kather19",
-                    choices=["kather16", "kather19"],
+                    choices=["kather16", "kather19", "inhouse"],
                     help='Name of the source dataset')
 parser.add_argument('--src_path', type=str, default="",
                     help='path to source dataset. For Kather19, root folder should contain CRC-VAL-HE-7K (test) and'
                          ' NCT-CRC-HE-100K (train/val). For Kather16, should contain class folders')
 parser.add_argument('--tar_name', type=str, default="kather16",
-                    choices=["kather16", "kather19"],
+                    choices=["kather16", "kather19", "inhouse"],
                     help='Name of the target dataset')
 parser.add_argument('--tar_path', type=str, default="",
                     help='path to source dataset. For Kather19, root folder should contain CRC-VAL-HE-7K (test) and'
@@ -149,7 +149,7 @@ def main():
 
     # Build model
     print("******** Building model ********")
-    print("Creating model with backbone '{}'".format(args.arch))
+    print("Creating model with backbone '{}', use hema: {}".format(args.arch, args.use_hema))
     model = sra.builder.SRA(
         models.__dict__[args.arch],
         args.moco_dim, args.moco_k, args.moco_m, args.moco_t, args.use_hema)

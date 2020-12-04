@@ -13,6 +13,8 @@ def load_dataset(transforms_train, transforms_test, **args):
         return load_kather19(transforms_train, transforms_test, **args)
     elif args.get('dataset', '') == "kather16":
         return load_kather16(transforms_train, transforms_test, **args)
+    elif args.get('dataset', '') == "inhouse":
+        return load_inHouse(transforms_train, transforms_test, **args)
     else:
         raise NotImplementedError("Unknown dataset")
 
@@ -55,3 +57,14 @@ def load_kather16(transforms_train, transforms_test, ratio=0.3, **args):
     id_test = id_shuffle[:int(len(id_shuffle)*ratio)]
 
     return test_dataset.class_to_idx, Subset(trainval_dataset, id_train), Subset(test_dataset, id_test)
+
+
+def load_inHouse(transforms_train, transforms_test, **args):
+
+    trainvaltest_dataset = datasets.ImageFolder(
+        args.get('data', ''),
+        transform=transforms_train,
+        is_valid_file=lambda f: f.endswith(".jpeg")
+    )
+
+    return trainvaltest_dataset.class_to_idx, trainvaltest_dataset, None
