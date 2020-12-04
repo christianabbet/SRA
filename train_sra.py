@@ -207,7 +207,7 @@ def train(train_loader, model, criterion_ss, criterion_hema, optimizer, epoch, a
     if args.use_hema:
         l_list = [losses, losses_ind, losses_crd, losses_hema, top1_d0, top1_d1]
     else:
-        l_list = [losses, losses_ind, losses_crd, top1_d0, top1_d1],
+        l_list = [losses, losses_ind, losses_crd, top1_d0, top1_d1]
 
     progress = ProgressMeter(
         len(train_loader),
@@ -260,6 +260,8 @@ def train(train_loader, model, criterion_ss, criterion_hema, optimizer, epoch, a
         if args.use_hema:
             loss_hema = args.lambda_hema * criterion_hema(l_hema, images[2])
             loss = loss + loss_hema
+        else:
+            loss_hema = torch.zeros(1).cuda(args.gpu, non_blocking=True)
 
         # 4. Update metrics
         acc1d0, acc5d0 = accuracy(l_ind_d0, t_ind_d0, topk=(1, 5))
