@@ -101,6 +101,7 @@ class SRA(nn.Module):
             labels_ind_d1:  label for in-domain loss over target (d1) samples
             h_crd_d0tod1:   entropy measure for cross-domain loss from source (d0) to target (d1)
             h_crd_d1tod0:   entropy measure for cross-domain loss from target (d1) to source (d0)
+            logits_hema:    logits for hematoxylin loss over (d0) and (d1) samples
         """
 
         # compute query features and normalize
