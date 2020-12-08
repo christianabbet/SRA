@@ -5,6 +5,18 @@ import numpy as np
 import math
 import torch
 
+dataset_k19tok16 = {
+    0: 6,  # 'ADI': '07_ADIPOSE',
+    1: 7,  # 'BACK': '08_EMPTY',
+    2: 4,  # 'DEB': '05_DEBRIS',
+    3: 3,  # 'LYM': '04_LYMPHO',
+    4: 4,  # 'MUC': '05_DEBRIS',
+    5: 1,  # 'MUS': '02_STROMA',
+    6: 5,  # 'NORM': '06_MUCOSA',
+    7: 1,  # 'STR': '02_STROMA',
+    8: 0,  # 'TUM': '01_TUMOR',
+}
+
 
 def plot_embedding(embedding, cls, cls_labels, filename, vrange=None):
     """

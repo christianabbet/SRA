@@ -54,7 +54,7 @@ parser.add_argument('-a', '--arch', metavar='ARCH',
                         ' (default: resnet18)')
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
-parser.add_argument('-b', '--batch-size', default=128, type=int,
+parser.add_argument('-b', '--batch-size', default=32, type=int,
                     metavar='N',
                     help='mini-batch size (default: 256), this is the total '
                          'batch size of all GPUs on the current node when '
@@ -126,7 +126,7 @@ def main():
             # Map model to be loaded to specified single gpu.
             loc = 'cuda:{}'.format(args.gpu)
             checkpoint = torch.load(args.checkpoint, map_location=loc)
-        state = model.load_state_dict(checkpoint['state_dict'])
+        state = model.load_state_dict(checkpoint['state_dict'], strict=False)
         print("=> loaded checkpoint {} '{}' (epoch {})"
               .format(state, args.checkpoint, checkpoint['epoch']))
     else:
@@ -197,8 +197,7 @@ def main():
 def eval(eval_loader, model, n, args):
 
     # Switch to eval mode and select encoder output
-    model_encoder = model.encoder_q
-    model_encoder.eval()
+    model.eval()
     labels = np.zeros(n)
     outputs = np.zeros((n, args.moco_dim))
 
@@ -209,7 +208,10 @@ def eval(eval_loader, model, n, args):
             images = images.cuda(args.gpu, non_blocking=True)
 
         # compute embedding output
-        output = model_encoder(images)
+        output = model.encoder_q(images)  # queries: NxC
+        output = output.view((-1, model.dim_encoder, 7, 7))
+        output = nn.functional.adaptive_avg_pool2d(output, (1, 1)).squeeze()
+        output = model.encoder_q_mlp(output)
         output = nn.functional.normalize(output, dim=1)
 
         labels[args.batch_size*i:args.batch_size*i+output.shape[0]] = label
