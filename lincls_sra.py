@@ -10,6 +10,7 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.models as models
+from torch.utils.data import WeightedRandomSampler
 from torch.utils.tensorboard import SummaryWriter
 from datetime import date
 import os
@@ -71,7 +72,10 @@ parser.add_argument('--epochs', default=100, type=int,
                     help='number of total epochs to run (default: 100)')
 parser.add_argument('--print-freq', default=100, type=int,
                     help='print frequency as as a function of batchsize/numsamples (default: 100)')
-
+parser.add_argument('--weighted_cls', action='store_true', default=False,
+                    help='Sample all classes evenly (default: False)')
+parser.add_argument('--heavy_augmentation', action='store_true', default=False,
+                    help='Perform heavy data augmentation (default: False)')
 # Logging
 parser.add_argument('--exp_name', default='exp', type=str,
                     help='Name of the experiment (default: exp)')
@@ -100,19 +104,30 @@ def main():
     args = parser.parse_args()
     cudnn.benchmark = True
 
+    # TODO add inference / pred for bern
+    # TODO add inference / pred no target
+
     print("******** Define augmentation ********")
-    augmentation_train = transforms.Compose([
-        transforms.Resize(224),
-        # TODO try with balanced classes and/or transforms
-        # transforms.RandomResizedCrop(224, scale=(0.2, 1.)),
-        # transforms.RandomHorizontalFlip(),
-        # transforms.RandomVerticalFlip(),
-        # transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
-        # transforms.RandomGrayscale(p=0.2),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225]),
-    ])
+    if args.heavy_augmentation:
+        print('Use heavy augmentation')
+        augmentation_train = transforms.Compose([
+            transforms.RandomResizedCrop(224, scale=(0.2, 1.)),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
+            transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
+            transforms.RandomGrayscale(p=0.2),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225]),
+        ])
+    else:
+        print('No data augmentation')
+        augmentation_train = transforms.Compose([
+            transforms.Resize(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225]),
+        ])
 
     augmentation_test = transforms.Compose([
         transforms.Resize(224),
@@ -143,9 +158,16 @@ def main():
     train_dataset = torch.utils.data.Subset(trainval_dataset_src, rnd_subset_train)
     val_dataset = torch.utils.data.Subset(trainval_dataset_src, rnd_subset_val)
 
+    if args.weighted_cls:
+        print('Use weighted classes sampler')
+        sampler = make_weighted_classes_sampler(targets=np.array(train_dataset.dataset.targets)[train_dataset.indices])
+    else:
+        print('No training sampler')
+        sampler = None
+
     train_loader_src = torch.utils.data.DataLoader(
-        train_dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=True, drop_last=True)
+        train_dataset, batch_size=args.batch_size, shuffle=not args.weighted_cls, sampler=sampler,
+        num_workers=args.workers, pin_memory=True, drop_last=False)
     val_loader_src = torch.utils.data.DataLoader(
         val_dataset, batch_size=args.batch_size, shuffle=False,
         num_workers=args.workers, pin_memory=True)
@@ -251,13 +273,32 @@ def main():
 
         if losses_va < best_loss_val:
             best_loss_val = losses_va
-            print('Saving model with best validation loss @ epoch: {}'.format(epoch))
+            print('Saving model with best validation loss {:.3f} @ epoch: {}'.format(best_loss_val, epoch))
             torch.save({
                 'epoch': epoch + 1,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'args': args.__dict__,
             }, f=os.path.join(run_folder, '{}_best.pth.tar'.format(filename)))
+
+            # Define both src and tar as tar as we adapted the outputs
+            np.save(arr={
+                'dataset_src': args.tar_name,
+                'dataset_tar': args.tar_name,
+                'y_cgt_test_tar': y_target_te,
+                'y_pred_test_tar': y_output_te,
+                'args': args.__dict__,
+            }, file=os.path.join(run_folder, '{}.npy'.format(filename)))
+
+
+def make_weighted_classes_sampler(targets):
+    classes, n = np.unique(targets, return_counts=True)
+    p_classes = n.sum() / (n + 1)
+    sampler = WeightedRandomSampler(weights=p_classes[targets],
+                                    num_samples=int(n.sum()),
+                                    replacement=True)
+
+    return sampler
 
 
 def train(train_loader, model, mode, criterion, optimizer, epoch, args):
