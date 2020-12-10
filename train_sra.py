@@ -79,7 +79,7 @@ parser.add_argument('--lambda_hema', default=10., type=float,
                     help='lambda factor in when adding to loss, only with use_hema (default: 10.)')
 
 # Logging
-parser.add_argument('--exp_name', default='exp', type=str,
+parser.add_argument('--exp_name', default='train', type=str,
                     help='Name of the experiment (default: exp)')
 
 # MoCoV2 related-specific configs:
@@ -159,7 +159,7 @@ def main():
 
     print("******** Define criterion and optimizer ********")
     run_folder = os.path.join("runs", "{}_train_{}".format(date.today(), args.exp_name))
-    filename = "checkpoint_{}_{}_sra".format(args.src_name, args.tar_name, args.exp_name)
+    filename = "checkpoint_{}_{}_sra_train_{}".format(args.src_name, args.tar_name, args.exp_name)
     criterion_ss = nn.CrossEntropyLoss(reduction='sum').cuda(args.gpu)
     criterion_hema = nn.L1Loss().cuda(args.gpu)
     optimizer = torch.optim.SGD(model.parameters(), args.lr,

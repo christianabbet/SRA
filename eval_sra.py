@@ -27,17 +27,16 @@ model_names = sorted(name for name in models.__dict__
 # Main arguments (mandatory)
 parser = argparse.ArgumentParser(description='SRA evaluation process')
 parser.add_argument('--src_name', type=str, default="kather19",
-                    choices=["kather16", "kather19"],
+                    choices=["kather19"],
                     help='Name of the source dataset')
 parser.add_argument('--src_path', type=str, default="",
                     help='path to source dataset. For Kather19, root folder should contain CRC-VAL-HE-7K (test) and'
-                         ' NCT-CRC-HE-100K (train/val). For Kather16, should contain class folders')
+                         ' NCT-CRC-HE-100K (train/val)')
 parser.add_argument('--tar_name', type=str, default="kather16",
-                    choices=["kather16", "kather19"],
+                    choices=["kather16", "inhouse"],
                     help='Name of the target dataset')
 parser.add_argument('--tar_path', type=str, default="",
-                    help='path to source dataset. For Kather19, root folder should contain CRC-VAL-HE-7K (test) and'
-                         ' NCT-CRC-HE-100K (train/val). For Kather16, should contain class folders')
+                    help='For Kather16, should contain class folders')
 parser.add_argument('--checkpoint', default='', type=str,
                     help='path to latest checkpoint (default: none)')
 
@@ -59,6 +58,10 @@ parser.add_argument('-b', '--batch-size', default=32, type=int,
                     help='mini-batch size (default: 256), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
+
+# Logging
+parser.add_argument('--exp_name', default='exp', type=str,
+                    help='Name of the experiment (default: exp)')
 
 # MoCoV2 related-specific configs:
 parser.add_argument('--moco-dim', default=128, type=int,
@@ -134,7 +137,7 @@ def main():
         exit()
 
     # Compute embedding space if needed
-    filename_embedding = os.path.join("sra_eval_{}_to_{}.npy".format(args.src_name, args.tar_name))
+    filename_embedding = "embedding_{}_{}_sra_eval_{}.npy".format(args.src_name, args.tar_name, args.exp_name)
     if not os.path.exists(filename_embedding):
         print("Inference ...")
         dsrc_feat, dsrc_lab = eval(src_train_loader, model, len(src_trainval_dataset), args)
@@ -164,33 +167,31 @@ def main():
     data['id_data_d1'] = np.random.RandomState(seed=args.seed).permutation(k_feat.shape[0])[:n_feat_subset]
     data['label_dataset'] = np.concatenate((np.zeros(len(data['id_data_d0'])),
                                             np.ones(len(data['id_data_d1']))), axis=0)
-
     data['embed'] = TSNE(n_components=2).fit_transform(
         np.concatenate((q_feat[data['id_data_d0']],
                         k_feat[data['id_data_d1']]), axis=0))
 
-    vrange = np.concatenate((data['embed'] .min(axis=0), data['embed'].max(axis=0)), axis=0)
-    n_feat_subset = len(data['id_data_d0'])
+    vrange = np.concatenate((data['embed'].min(axis=0), data['embed'].max(axis=0)), axis=0)
 
     # Distribution train and test (dataset label)
     plot_embedding(embedding=data['embed'],
                    cls=data['label_dataset'],
                    cls_labels=[args.src_name, args.tar_name],
-                   filename="tsne_{}+{}.png".format(args.src_name, args.tar_name),
+                   filename="tsne_{}_{}_sra_{}.png".format(args.src_name, args.tar_name, args.exp_name),
                    vrange=vrange)
 
     # Distribution dataset source
     plot_embedding(embedding=data['embed'][:n_feat_subset],
                    cls=q_lab[data['id_data_d0']],
                    cls_labels=list(data['src_class_to_idx'].keys()),
-                   filename="tsne_{}_cls.png".format(args.src_name),
+                   filename="tsne_{}_sra_cls_{}.png".format(args.src_name, args.exp_name),
                    vrange=vrange)
 
     # Distribution dataset target
     plot_embedding(embedding=data['embed'][n_feat_subset:],
                    cls=k_lab[data['id_data_d1']],
                    cls_labels=list(data['tar_class_to_idx'].keys()),
-                   filename="tsne_{}_cls.png".format(args.tar_name),
+                   filename="tsne_{}_sra_cls_{}.png".format(args.tar_name, args.exp_name),
                    vrange=vrange)
 
 

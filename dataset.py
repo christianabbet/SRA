@@ -61,10 +61,16 @@ def load_kather16(transforms_train, transforms_test, ratio=0.3, **args):
 
 def load_inHouse(transforms_train, transforms_test, **args):
 
-    trainvaltest_dataset = datasets.ImageFolder(
+    trainval_dataset = datasets.ImageFolder(
         args.get('data', ''),
         transform=transforms_train,
         is_valid_file=lambda f: f.endswith(".jpeg")
     )
 
-    return trainvaltest_dataset.class_to_idx, trainvaltest_dataset, None
+    test_dataset = datasets.ImageFolder(
+        args.get('data', ''),
+        transform=transforms_test,
+        is_valid_file=lambda f: f.endswith(".jpeg")
+    )
+
+    return trainval_dataset.class_to_idx, trainval_dataset, test_dataset

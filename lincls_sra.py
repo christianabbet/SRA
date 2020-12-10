@@ -36,7 +36,7 @@ parser.add_argument('--src_path', type=str, default="",
                     help='path to source dataset. For Kather19, root folder should contain CRC-VAL-HE-7K (test) and'
                          ' NCT-CRC-HE-100K (train/val)')
 parser.add_argument('--tar_name', type=str, default="kather16",
-                    choices=["kather16"],
+                    choices=["kather16", "inhouse"],
                     help='Name of the target dataset')
 parser.add_argument('--tar_path', type=str, default="",
                     help='For Kather16, should contain class folders')
@@ -212,7 +212,9 @@ def main():
 
     print("******** Define criterion and optimizer ********")
     run_folder = os.path.join("runs", "{}_cls_{}".format(date.today(), args.exp_name))
-    filename = "checkpoint_{}_sra_cls".format(args.src_name, args.exp_name)
+    filename_base = "checkpoint_{}_sra_cls_{}".format(args.src_name, args.exp_name)
+    filename_pth = os.path.join(run_folder, '{}_best.pth.tar'.format(filename_base))
+    filename_npy = os.path.join(run_folder, '{}.npy'.format(filename_base))
     writer = SummaryWriter(log_dir=run_folder)
 
     # define loss function (criterion) and optimizer
@@ -248,47 +250,56 @@ def main():
                             'test': f1_score(y_target_te, np.argmax(y_output_te, axis=1), average='weighted')},
                            epoch)
 
-        # Train and results on Target data
-        losses_te, top1_te, top5_te, y_target_te, y_output_te = train(test_loader_tar, model, 'eval', criterion,
-                                                                      optimizer, epoch, args)
-        # Adjust predictions
-        if args.src_name == 'kather19' and args.tar_name == 'kather16':
-            # Create fake logits vector with 0 probability
-            y_output_new = -np.inf*np.ones((len(y_output_te), len(class_to_idx_tar)))
-            for key_src, key_tar in dataset_k19tok16.items():
-                y_output_new[:, key_tar] = np.max([y_output_new[:, key_tar], y_output_te[:, key_src]], axis=0)
-            y_output_te = y_output_new
-            # Remove column with no predictions (-inf)
-            id_inf = np.nonzero(np.isfinite(y_output_te).sum(axis=0) == 0)[0][0]
-            y_output_te = y_output_te[y_target_te != id_inf, :]
-            y_target_te = y_target_te[y_target_te != id_inf]
-        else:
-            raise NotImplementedError('Conversion of labels from {} to {} not implemented'.format(
-                args.src_name, args.tar_name))
-
-        writer.add_scalar('Loss_{}'.format(args.tar_name), losses_te, epoch)
-        writer.add_scalars('F1_{}'.format(args.tar_name),
-                           metrics(y_target_te, y_output_te.argmax(axis=1), class_to_idx_tar),
-                           epoch)
-
         if losses_va < best_loss_val:
             best_loss_val = losses_va
             print('Saving model with best validation loss {:.3f} @ epoch: {}'.format(best_loss_val, epoch))
             torch.save({
-                'epoch': epoch + 1,
+                'epoch': epoch,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'args': args.__dict__,
-            }, f=os.path.join(run_folder, '{}_best.pth.tar'.format(filename)))
+            }, f=filename_pth)
 
-            # Define both src and tar as tar as we adapted the outputs
-            np.save(arr={
-                'dataset_src': args.tar_name,
-                'dataset_tar': args.tar_name,
-                'y_cgt_test_tar': y_target_te,
-                'y_pred_test_tar': y_output_te,
-                'args': args.__dict__,
-            }, file=os.path.join(run_folder, '{}.npy'.format(filename)))
+    # Restore best model and apply on target set
+    print("Restore best lincls model weights ...")
+    state_dict = torch.load(filename_pth)
+    epoch = state_dict['epoch']
+    model.load_state_dict(state_dict['state_dict'], strict=True)
+
+    # Evalutae and results on Target data
+    print("Predict labels on target domain ...")
+    losses_te, top1_te, top5_te, y_target_te, y_output_te = train(test_loader_tar, model, 'eval', criterion,
+                                                                  optimizer, epoch, args)
+    # Adjust predictions
+    if args.src_name == 'kather19' and args.tar_name == 'kather16':
+        # Create fake logits vector with 0 probability
+        y_output_new = -np.inf*np.ones((len(y_output_te), len(class_to_idx_tar)))
+        for key_src, key_tar in dataset_k19tok16.items():
+            y_output_new[:, key_tar] = np.max([y_output_new[:, key_tar], y_output_te[:, key_src]], axis=0)
+        y_output_te = y_output_new
+        # Remove column with no predictions (-inf)
+        id_inf = np.nonzero(np.isfinite(y_output_te).sum(axis=0) == 0)[0][0]
+        y_output_te = y_output_te[y_target_te != id_inf, :]
+        y_target_te = y_target_te[y_target_te != id_inf]
+    elif args.src_name == 'kather19' and args.tar_name == 'inhouse':
+        pass
+    else:
+        raise NotImplementedError('Conversion of labels from {} to {} not implemented'.format(
+            args.src_name, args.tar_name))
+
+    writer.add_scalar('Loss_{}'.format(args.tar_name), losses_te, epoch)
+    writer.add_scalars('F1_{}'.format(args.tar_name),
+                       metrics(y_target_te, y_output_te.argmax(axis=1), class_to_idx_tar),
+                       epoch)
+
+    # Define both src and tar as tar as we adapted the outputs
+    np.save(arr={
+        'dataset_src': args.tar_name,
+        'dataset_tar': args.tar_name,
+        'y_cgt_test_tar': y_target_te,
+        'y_pred_test_tar': y_output_te,
+        'args': args.__dict__,
+    }, file=filename_npy)
 
 
 def make_weighted_classes_sampler(targets):
