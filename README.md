@@ -23,7 +23,7 @@ cluster structures by capturing visual similarity with intra-domain and cross-do
 self-supervision. We show through extensive experiments that Self-Rule to Adapt outperforms 
 baselines across unsupervised and self-supervised domain adaptation settings. 
 
-![Segmentation result](figs/pipeline+loss_graph.png)
+![Segmentation result](figs/pipeline.png)
 
 ## Requirements
 The implementation extended from the implementation of MoCoV2 ([paper](https://arxiv.org/abs/2003.04297), 
