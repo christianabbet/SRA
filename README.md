@@ -1,18 +1,17 @@
-# Self-Rule to Adapt (SRA)
-
-Pytorch implementation of [Self-Rule tp Adapt (SRA)](SOON).
+# Pytorch implementation [Self-Rule to Adapt (SRA)](SOON):
+## Learning Generalized Features from Sparsely-Labeled Data Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Phenotyping.
 
 Supervised learning is conditioned by the availability of labeled data, which are especially expensive to acquire in 
-the field of digital pathology. Making use of open-source data for pre-training or using domain adaptation can be a 
-way to overcome this issue. However, pre-trained networks often fail to generalize to new test domains that are not 
+the field of medical image analysis. Making use of open-source data for pre-training or using domain adaptation can be 
+a way to overcome this issue. However, pre-trained networks often fail to generalize to new test domains that are not 
 distributed identically due to variations in tissue stainings, types, and textures. Additionally, current domain 
-adaptation methods mainly rely on fully-labeled source datasets. In this work, we propose Self-Rule to Adapt 
-(SRA) which takes advantage of self-supervised learning to perform domain adaptation and removes the necessity of a 
-fully-labeled source datasets. SRA can effectively transfer the discriminative knowledge obtained from a few 
-labeled source domain to a new target domain without requiring additional tissue annotations. Our method 
-harnesses both domains’ structures by capturing visual similarity with intra-domain and cross-domain self-supervision.
-We show that our proposed method outperforms baselines across diverse domain adaptation settings and further validate 
-our approach onour in-house clinical cohort.
+adaptation methods mainly rely on fully-labeled source datasets. In this work, we propose Self-Rule to Adapt (SRA)
+which takes advantage of self-supervised learning to perform domain adaptation and removes the burden of fully-labeled 
+source datasets. SRA can effectively transfer the discriminative knowledge obtained from a few labeled source domain to 
+a new target domain without requiring additional tissue annotations. Our method harnesses both domains’ structures by
+capturing visual similarity with intra-domain and cross-domain self-supervision. We show that our proposed method 
+outperforms baselines across diverse domain adaptation settings and further validate our approach to our in-house 
+clinical cohort.
 
 ![Segmentation result](figs/pipeline.png)
 
@@ -69,6 +68,13 @@ overall, they represent all tissue types equally.
 If you use this work please use the following citation :).
 
 ```text
-TBD
+@inproceedings{
+	abbet2021selfrule,
+	title={Self-Rule to Adapt: Learning Generalized Features from Sparsely-Labeled Data Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Phenotyping},
+	author={Christian Abbet and Linda Studer and Andreas Fischer and Heather Dawson and Inti Zlobec and Behzad Bozorgtabar and Jean-Philippe Thiran},
+	booktitle={Medical Imaging with Deep Learning},
+	year={2021},
+	url={https://openreview.net/forum?id=VO7asaS5GUk}
+}
 ```
 
