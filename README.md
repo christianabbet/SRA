@@ -1,6 +1,6 @@
 # Self-Rule to Adapt (SRA)
 
-Pytorch implementation of [Self-Rule tp Adapt (SRA)](TODO).
+Pytorch implementation of [Self-Rule tp Adapt (SRA)](https://openreview.net/forum?id=VO7asaS5GUk).
 
 
 Acquiring large amounts of labeled data is often not feasible in medical image analysis, 
