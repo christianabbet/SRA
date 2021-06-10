@@ -1,4 +1,4 @@
-# Pytorch implementation [Self-Rule to Adapt (SRA)](SOON):
+# Pytorch implementation [Self-Rule to Adapt (SRA)](https://github.com/christianabbet/SRA):
 ## Learning Generalized Features from Sparsely-Labeled Data Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Phenotyping.
 
 Supervised learning is conditioned by the availability of labeled data, which are especially expensive to acquire in 
