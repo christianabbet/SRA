@@ -37,7 +37,8 @@ Python (3.8)
 
 ## Usage
 The pre-trained models (with and without the linear classifier) are available on the google
-drive ([link](https://drive.google.com/drive/folders/1_4qa2JJPqMvEq6FgoTnmzkvPVgzQWma7?usp=sharing)). 
+drive ([link](https://drive.google.com/drive/folders/1_4qa2JJPqMvEq6FgoTnmzkvPVgzQWma7?usp=sharing)). When using your 
+own dataset, please follow the structure of the pytorch [ImageFolder](https://pytorch.org/vision/stable/datasets.html#torchvision.datasets.ImageFolder).
 
 To train the model with single-source domain:
 ```bash
