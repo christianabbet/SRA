@@ -90,7 +90,6 @@ def get_supervised_val_augmentation(normalize=True):
 
     """
 
-    # TODO remove norm imagenet
     tfm = transforms.Compose([
         transforms.Resize(224),
         transforms.ToTensor(),

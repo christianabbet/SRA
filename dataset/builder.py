@@ -3,11 +3,12 @@ from torch.utils.data import Dataset
 from torch.utils.data import ConcatDataset
 from typing import Tuple, Optional, Iterable
 import numpy as np
+from torch.utils.data.sampler import WeightedRandomSampler
 from constants import (const_kather19, const_crctp, const_crctp_to_kather19, const_crctp_cstr_to_kather19)
 
 
 def dataset_selection(
-        name: str, path: str, mixed: bool, transform_train: object, transform_val: object, **kwargs,
+        name: str, path: str, transform_train: object, transform_val: object, **kwargs,
 ) -> Tuple[Dataset, Dataset, Iterable[str]]:
     """
     Select and build dataset for training.
@@ -25,8 +26,6 @@ def dataset_selection(
     path: str
         Path tot the dataset. When feeding two dataset path should be composed as 'path1:path2', where path1 is the
         path to the first dataset and path2 the path to the second one.
-    mixed: bool
-        If true images are mixture of tissues
     transform_train: object
         Transform to apply on train images.
     transform_val: object
@@ -45,12 +44,12 @@ def dataset_selection(
     # Build dataset on Kather19
     if name == 'kather19':
         return build_dataset(path=path, transform_train=transform_train, transform_val=transform_val,
-                             remap=const_kather19, mixed=mixed, **kwargs)
+                             remap=const_kather19, **kwargs)
 
     # Build dataset on CRCTP
     elif name == 'crctp':
         return build_dataset(path=path, transform_train=transform_train, transform_val=transform_val,
-                             remap=const_crctp, mixed=mixed, **kwargs)
+                             remap=const_crctp, **kwargs)
 
     # Build dataset on Kather19 and CRCTP
     elif name == 'crctp+kather19' or name == 'crctp-cstr+kather19':
@@ -65,13 +64,13 @@ def dataset_selection(
         d_train_1, d_val_1, _ = build_dataset(
             path=paths[0],
             transform_train=transform_train, transform_val=transform_val,
-            remap=remap, mixed=mixed, **kwargs
+            remap=remap, **kwargs
         )
         # Kather19
         d_train_2, d_val_2, _ = build_dataset(
             path=paths[1],
             transform_train=transform_train, transform_val=transform_val,
-            remap=None, mixed=mixed, **kwargs
+            remap=None, **kwargs
         )
 
         cls_labels = merge_classes(d_train_1.class_to_idx, d_train_2.class_to_idx)
@@ -150,3 +149,30 @@ def build_dataset(
     #     dataset_train.remap_classes(remap)
     #     dataset_val.remap_classes(remap)
     return dataset_train, dataset_val, dataset_val.classes
+
+
+def build_balanced_sampler(targets) -> WeightedRandomSampler:
+    """
+    Build a balanced sampler for ImageFolder dataset. The probability is scaled as a function of the occurence of the
+    class. For examples if class 0 has 100 samples and class 1 has 900 samples, the weigths would respectively be
+    1000/100 = 10 and 1000/900 = 1.11.
+    Here, the replacement if set to Fals, hence the total number of sample is based on the class with the lowest number
+    of examples (2 classes, 100 samples -> 200 samples).
+
+    Parameters
+    ----------
+    targets: ImageFolder
+        Dataset to balance sample from.
+    Returns
+    -------
+    sampler: WeightedRandomSampler
+        Sampler to feed to the data loader.
+    """
+    cls, n_cls = np.unique(targets, return_counts=True)
+    n_weights = dict(zip(cls, np.sum(n_cls) / n_cls))
+
+    return WeightedRandomSampler(
+        weights=[n_weights[t] for t in targets],
+        num_samples=int(len(n_cls) * int(n_cls.mean())),
+        replacement=True,
+    )

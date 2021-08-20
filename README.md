@@ -28,13 +28,15 @@ and healthy tissue.
 * [CRCTP - Fold 2](https://warwick.ac.uk/fac/cross_fac/tia/data/crc-tp): 196,000 histological images of human colorectal cancer 
 and healthy tissue.
 
-Python
-* pytorch = 1.2.0
-* torchvision = 0.4.0
+Python (3.8)
+* pytorch = 1.6.0
+* cudatoolkit = 10.1
+* torchvision = 0.4.0 
+* albumentations = 1.0.0
 
 
 ## Usage
-The pre-trained models are available on the google
+The pre-trained models (with and without the linear classifier) are available on the google
 drive ([link](https://drive.google.com/drive/folders/1_4qa2JJPqMvEq6FgoTnmzkvPVgzQWma7?usp=sharing)). 
 
 To train the model with single-source domain:
@@ -45,9 +47,9 @@ DATASET_TAR="/path/to/your_own_data"
 # Train unsupervised architecture
 python train_sra.py --root "${DATASET_SRC}:${DATASET_TAR}"
 # Train linear classifier on top
-python ...
+# You can use the model provided on the google drive (checkpoint_sra_k19_inhouse.pth)
+python train_sra_cls.py --name="kather19" --root "${DATASET_SRC}" --loadpath=/path/to/pretrained/model.pth
 ```
-
 
 To train the model with multi-source domain:
 ```bash
@@ -56,9 +58,10 @@ DATASET_SRC1="/path/to/CRCTP/Training"
 DATASET_SRC2="/path/to/Kather19/NCT-CRC-HE-100K"
 DATASET_TAR="/path/to/your_own_data"
 # Train unsupervised architecture
-python train_sra.py --root "${DATASET_SRC1}:${DATASET_SRC2}:${DATASET_TAR}"
+python train_sra.py --root="${DATASET_SRC1}:${DATASET_SRC2}:${DATASET_TAR}"
 # Train linear classifier on top
-python ...
+# You can use the model provided on the google drive (checkpoint_sra_crctp_k19_inhouse.pth)
+python train_sra_cls.py --name="crctp-cstr+kather19" --root "${DATASET_SRC1}:${DATASET_SRC2}" --loadpath=/path/to/pretrained/model.pth
 ```
 
 ## Results
@@ -83,9 +86,10 @@ overall, they represent all tissue types equally.
 
 ## Citation
 
-If you use this work please use the following citation :).
+If you use this work please use the following citations :).
 
 ```text
+# Single-source domain adaptation
 @inproceedings{
 	abbet2021selfrule,
 	title={Self-Rule to Adapt: Learning Generalized Features from Sparsely-Labeled Data Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Phenotyping},
@@ -93,6 +97,15 @@ If you use this work please use the following citation :).
 	booktitle={Medical Imaging with Deep Learning},
 	year={2021},
 	url={https://openreview.net/forum?id=VO7asaS5GUk}
+}
+
+# Multi-source domain adaptation (generalization)
+@inproceedings{
+	abbet2021selfrulegen,
+	title={Self-Rule to Adapt: Generalized Multi-source Feature Learning Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Detection},
+	author={Christian Abbet and Linda Studer and Andreas Fischer and Heather Dawson and Inti Zlobec and Behzad Bozorgtabar and Jean-Philippe Thiran},
+	year={2021},
+	url={TBA}
 }
 ```
 
