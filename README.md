@@ -1,4 +1,4 @@
-# Pytorch implementation [Self-Rule to Adapt (SRA)](https://openreview.net/forum?id=VO7asaS5GUk):
+# Pytorch implementation Self-Rule to Adapt (SRA):
 ## Self-Rule to Adapt: Generalized Multi-source Feature Learning Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Detection
 
 Supervised learning is constrained by the availability of labeled data, which are especially expensive to acquire in 
@@ -15,6 +15,9 @@ self-supervision. Moreover, we present a generalized formulation of our approach
 from multi-source domains. We show that our proposed method outperforms baselines for domain adaptation of colorectal 
 tissue type classification and further validate our approach on our in-house clinical cohort. The code and models are 
 available open-source:
+
+Link: [paper single-source (June 2021)](https://openreview.net/forum?id=VO7asaS5GUk), 
+[paper multi-source (August 2021)](https://arxiv.org/abs/2108.09178)
 
 ![Segmentation result](figs/pipeline.jpeg)
 
@@ -92,21 +95,21 @@ If you use this work please use the following citations :).
 ```text
 # Single-source domain adaptation
 @inproceedings{
-	abbet2021selfrule,
-	title={Self-Rule to Adapt: Learning Generalized Features from Sparsely-Labeled Data Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Phenotyping},
-	author={Christian Abbet and Linda Studer and Andreas Fischer and Heather Dawson and Inti Zlobec and Behzad Bozorgtabar and Jean-Philippe Thiran},
-	booktitle={Medical Imaging with Deep Learning},
-	year={2021},
-	url={https://openreview.net/forum?id=VO7asaS5GUk}
+    abbet2021selfrule,
+    title={Self-Rule to Adapt: Learning Generalized Features from Sparsely-Labeled Data Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Phenotyping},
+    author={Christian Abbet and Linda Studer and Andreas Fischer and Heather Dawson and Inti Zlobec and Behzad Bozorgtabar and Jean-Philippe Thiran},
+    booktitle={Medical Imaging with Deep Learning},
+    year={2021},
+    url={https://openreview.net/forum?id=VO7asaS5GUk}
 }
 
-# Multi-source domain adaptation (generalization)
-@inproceedings{
-	abbet2021selfrulegen,
-	title={Self-Rule to Adapt: Generalized Multi-source Feature Learning Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Detection},
-	author={Christian Abbet and Linda Studer and Andreas Fischer and Heather Dawson and Inti Zlobec and Behzad Bozorgtabar and Jean-Philippe Thiran},
-	year={2021},
-	url={TBA}
+# Multi-source domain adaptation (generalization of previous work)
+@article{
+    abbet2021selfrulemulti,
+    title={Self-Rule to Adapt: Generalized Multi-source Feature Learning Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Detection},
+    author={Christian Abbet and Linda Studer and Andreas Fischer and Heather Dawson and Inti Zlobec and Behzad Bozorgtabar and Jean-Philippe Thiran},
+    journal={arXiv preprint arXiv:2108.09178},
+    year={2021}
 }
 ```
 
