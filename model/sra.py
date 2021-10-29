@@ -19,6 +19,7 @@ class SRA(nn.Module):
             T: Optional[float] = 0.07,
             n_dataset: Optional[int] = 2,
             device: Optional[float] = "cpu",
+            mean_entropy: Optional[bool] = True,
             force_multi_source: Optional[float] = False,
     ):
         """
@@ -34,6 +35,8 @@ class SRA(nn.Module):
             Softmax temperature. Represent the sharpness / confidence on the prediction. Default value is 0.07.
         device: str
             Device to use. Default value is "cpu". Warning cpu training is really slow.
+        mean_entropy: bool
+            If True use mean entropy to compute predictions. Otherwise use only the encoder branch.
         force_force_multi_source: bool
             If true, we look for a matching target sample for each source domain. If false, only the best match across
             source domain is considered.
@@ -45,6 +48,7 @@ class SRA(nn.Module):
         self.T = T
         self.n_dataset = n_dataset
         self.device = device
+        self.mean_entropy = mean_entropy
         self.force_multi_source = force_multi_source
         self.loss = nn.CrossEntropyLoss(reduction='sum').to(device=self.device)
 
@@ -244,36 +248,45 @@ class SRA(nn.Module):
             labels_ind.append(labels_ind_)
 
         # 2. Cross-domain self-supervision
-        for i in range(self.n_dataset-1):
+        for i in range(self.n_dataset - 1):
             # Cross mapping - last considered as target
             h_crd_di_to_tar = self.compute_h_crd(
                 q=q[d_set == i],
                 k=k[d_set == i],
-                queue=queue[:, queue_dataset == self.n_dataset-1]
-            )
-
-            h_crd_di_to_tar_ = self.compute_h_crd(
-                q=k[d_set == i],
-                k=q[d_set == i],
-                queue=queue[:, queue_dataset == self.n_dataset-1]
+                queue=queue[:, queue_dataset == self.n_dataset - 1]
             )
 
             h_crd_tar_to_di = self.compute_h_crd(
-                q=q[d_set == self.n_dataset-1],
-                k=k[d_set == self.n_dataset-1],
+                q=q[d_set == self.n_dataset - 1],
+                k=k[d_set == self.n_dataset - 1],
                 queue=queue[:, queue_dataset == i]
             )
 
-            h_crd_tar_to_di_ = self.compute_h_crd(
-                q=k[d_set == self.n_dataset-1],
-                k=q[d_set == self.n_dataset-1],
-                queue=queue[:, queue_dataset == i]
-            )
+            # Use mean entropy over both key and query
+            if self.mean_entropy:
+                h_crd_di_to_tar_ = self.compute_h_crd(
+                    q=k[d_set == i],
+                    k=q[d_set == i],
+                    queue=queue[:, queue_dataset == self.n_dataset - 1]
+                )
 
-            h_crd.extend([
-                (1/2)*(h_crd_di_to_tar + h_crd_di_to_tar_),
-                (1/2)*(h_crd_tar_to_di + h_crd_tar_to_di_)
-            ])
+                h_crd_tar_to_di_ = self.compute_h_crd(
+                    q=k[d_set == self.n_dataset - 1],
+                    k=q[d_set == self.n_dataset - 1],
+                    queue=queue[:, queue_dataset == i]
+                )
+
+                h_crd.extend([
+                    (1 / 2) * (h_crd_di_to_tar + h_crd_di_to_tar_),
+                    (1 / 2) * (h_crd_tar_to_di + h_crd_tar_to_di_)
+                ])
+
+            # Use mean entropy using only the query
+            if not self.mean_entropy:
+                h_crd.extend([
+                    h_crd_di_to_tar,
+                    h_crd_tar_to_di
+                ])
 
         # 3 Compute size of source and target samples
         n = [l.shape[0] for l in logits_ind]

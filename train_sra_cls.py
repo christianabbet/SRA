@@ -38,10 +38,14 @@ def main(args):
     # Fraction
     if args.fraction != 1.0:
         rnd = np.random.RandomState(seed=args.seed)
-        n_samples = len(dataset_train)
-        n_fraction = int(n_samples*args.fraction)
-        id_fraction = rnd.permutation(n_samples)[:n_fraction]
-        dataset_train = Subset(dataset_train, id_fraction)
+        # Subset train
+        n_samples_train = len(dataset_train)
+        n_fraction_train = int(n_samples_train*args.fraction)
+        dataset_train = Subset(dataset_train, rnd.permutation(n_samples_train)[:n_fraction_train])
+        # Subset val
+        n_samples_val = len(dataset_val)
+        n_fraction_val = int(n_samples_val*args.fraction)
+        dataset_val = Subset(dataset_val, rnd.permutation(n_samples_val)[:n_fraction_val])
 
     # Load train and validation dataset
     logger.debug("Balanced classes: {}".format(args.balance))
