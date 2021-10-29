@@ -22,14 +22,6 @@ Link: [paper single-source (June 2021)](https://openreview.net/forum?id=VO7asaS5
 ![Segmentation result](figs/pipeline.jpeg)
 
 ## Requirements
- 
-Dataset:
-* [Kather16](https://zenodo.org/record/53169): Collection of textures in colorectal cancer 
-histology containing 5000 histological images.
-* [Kather19 - NCT-CRC-HE-100K](https://zenodo.org/record/1214456): 100,000 histological images of human colorectal cancer 
-and healthy tissue.
-* [CRCTP - Fold 2](https://warwick.ac.uk/fac/cross_fac/tia/data/crc-tp): 196,000 histological images of human colorectal cancer 
-and healthy tissue.
 
 Python (3.8)
 * pytorch = 1.6.0
@@ -39,6 +31,27 @@ Python (3.8)
 
 
 ## Usage
+
+To use the model please follow the steps. We will first explain how to 
+[create a target dataset](#step-1-create-your-target-dataset) using whole slide images. .......
+
+###  Step 1: Create your Target Dataset
+
+
+**TODO**
+
+### Step 2: Download publicly available data
+Here is a non-exhaustive list of the publicly available dataset of colorectal tissues:
+
+* [Kather16](https://zenodo.org/record/53169): Collection of textures in colorectal cancer 
+histology containing 5000 histological images.
+* [Kather19 - NCT-CRC-HE-100K](https://zenodo.org/record/1214456): 100,000 histological images of human colorectal cancer 
+and healthy tissue.
+* [CRCTP - Fold 2](https://warwick.ac.uk/fac/cross_fac/tia/data/crc-tp): 196,000 histological images of human colorectal cancer 
+and healthy tissue.
+
+### Step 3: Train the model
+
 The pre-trained models (with and without the linear classifier) are available on the google
 drive ([link](https://drive.google.com/drive/folders/1_4qa2JJPqMvEq6FgoTnmzkvPVgzQWma7?usp=sharing)). When using your 
 own dataset, please follow the structure of the pytorch [ImageFolder](https://pytorch.org/vision/stable/datasets.html#torchvision.datasets.ImageFolder).
@@ -67,6 +80,10 @@ python train_sra.py --root="${DATASET_SRC1}:${DATASET_SRC2}:${DATASET_TAR}"
 # You can use the model provided on the google drive (checkpoint_sra_crctp_k19_inhouse.pth)
 python train_sra_cls.py --name="crctp-cstr+kather19" --root "${DATASET_SRC1}:${DATASET_SRC2}" --loadpath=/path/to/pretrained/model.pth
 ```
+
+
+### Step 4: Visualize 
+
 
 ## Results
 

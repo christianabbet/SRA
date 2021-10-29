@@ -1,0 +1,33 @@
+---
+# Extension of the generated files
+suffix: "classification_sra"
+
+# Configuration relative to the model
+model:
+    # Size of the batch
+    batch_size: 32
+    # Parameters of the model itself
+    parameters:
+        # Number of output classes
+        n_cls: 9
+        # Dimension of the embedding space
+        dim: 128
+
+# Configuration of the Whole Slide loader
+wsi:
+    # List of crops output size in pixel.
+    crop_sizes_px: [224]
+    # List of crops magnification level
+    crop_magnifications: [20]
+    # Overlapping/padding factor (0.50 = stride of 50% patch width)
+    padding_factor: 0.50
+    # Minimal size of object to keep on image (% of the total area)
+    ratio_object_thresh: 0.001
+
+# Information onf the dataset name and classes
+dataset:
+    # Name of the dataset (either 'kather19' or 'crctp')
+    name: "kather19"
+    # Name of the classes
+    cls_labels: ['ADI', 'BACK', 'DEB', 'LYM', 'MUC', 'MUS', 'NORM', 'STR', 'TUM']
+...
