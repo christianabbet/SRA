@@ -1,6 +1,7 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,pycharm+all,linux
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,pycharm+all,linux
 
+Kather_texture_2016_image_tiles_5000
 *.tar
 *.npy
 
