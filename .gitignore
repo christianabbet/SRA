@@ -1,9 +1,12 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,pycharm+all,linux
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,pycharm+all,linux
 
+# Related to current project
 data/*
+runs/*
 *.tar
 *.npy
+*.zip
 
 ### Linux ###
 *~
