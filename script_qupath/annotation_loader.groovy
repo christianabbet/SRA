@@ -3,14 +3,8 @@ import qupath.lib.objects.PathObjects
 import qupath.lib.roi.ROIs
 import qupath.lib.common.ColorTools
 
-// Define output path
-def folder_json = "/media/abbet/Data/pub/current/cls/stroma_roi_1000_supervised"
-def suffix_json = "_classification_supervised_r50_kather19_stroma_roi_1000_supervised_detection.json"
-
-// Load slide name
-def filename = getCurrentImageData().getServer().getURIs().getAt(0).getPath()
-filename = filename.substring(filename.lastIndexOf("/")+1)
-path = folder_json +  "/" + filename + suffix_json
+// Path to JSON
+path = "/path/to/detection/file.json"
 
 // Create reader and read file content
 println("Reading ...")
