@@ -4,7 +4,7 @@ from torch.utils.data import ConcatDataset
 from typing import Tuple, Optional, Iterable
 import numpy as np
 from torch.utils.data.sampler import WeightedRandomSampler
-from constants import (const_kather19, const_crctp, const_crctp_to_kather19, const_crctp_cstr_to_kather19)
+from dataset.constants import (const_kather19, const_crctp, const_crctp_to_kather19, const_crctp_cstr_to_kather19)
 
 
 def dataset_selection(
