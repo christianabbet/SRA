@@ -144,15 +144,18 @@ def main(
     )
 
     logger.debug("Plot output result of detections ...")
-    offset_x = int(wsi.s.properties[openslide.PROPERTY_NAME_BOUNDS_X])
-    offset_y = int(wsi.s.properties[openslide.PROPERTY_NAME_BOUNDS_Y])
+    # Correction from metadata offset
+    offset_x = int(wsi.s.properties.get(openslide.PROPERTY_NAME_BOUNDS_X, 0))
+    offset_y = int(wsi.s.properties.get(openslide.PROPERTY_NAME_BOUNDS_Y, 0))
+    # Correction for overlapping tiles
+    centering = 0.5*config['wsi']['padding_factor']*data['metadata'][0, -2]
 
     # Write classification output overlay for QuPath
     save_annotation_qupath(
-        tx=data['metadata'][:, 2] - offset_x,
-        ty=data['metadata'][:, 3] - offset_y,
-        bx=data['metadata'][:, 6] - offset_x,
-        by=data['metadata'][:, 7] - offset_y,
+        tx=data['metadata'][:, 2] - offset_x + centering,
+        ty=data['metadata'][:, 3] - offset_y + centering,
+        bx=data['metadata'][:, 6] - offset_x - centering,
+        by=data['metadata'][:, 7] - offset_y - centering,
         labels=np.argmax(data['classification'], axis=1),
         labels_name=data['classification_labels'],
         outpath=os.path.join(img_path[:-4] + "_detection.json"),
@@ -175,10 +178,10 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--wsi_path', type=str,
-                        default='/home/abbet/Desktop/BernCohortPart/001b_B2005.30530_C_HE.mrxs',
+                        default='TCGA-CK-6747-01Z-00-DX1.7824596c-84db-4bee-b149-cd8f617c285f.svs',
                         help='Path to the WSI file (.mrxs, .svs).')
     parser.add_argument('--model_path', type=str,
-                        default='/media/abbet/Data/pub/media21/run/e2h_wsi/sw0.25_sh0.15_new/best_model_sra_cls_sw0.25_sh0.15_seed0_k19.pth',
+                        default='best_model_srame_cls_k19.pth',
                         help='Path to the WSI file (.mrxs, .svs).')
     parser.add_argument('--config', type=str,
                         default='conf_wsi_classification.yaml',
@@ -196,5 +199,3 @@ if __name__ == '__main__':
         config=config,
         use_cuda=torch.cuda.is_available()
     )
-
-    # TODO script to generate dataset
