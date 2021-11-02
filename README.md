@@ -75,15 +75,15 @@ the classification (source) layer. We indicate the source and target dataset use
     <td>sra</td>
     <td>Kather19 + CRCTP</td>
     <td>In-house</td>
-    <td><a href="">pretrained (todo)</a></td>
-    <td><a href="">classification (todo)</a></td>
+    <td><a href="">pretrained (soon)</a></td>
+    <td><a href="">classification (soon)</a></td>
   </tr>
   <tr>
     <td>sra-me</td>
     <td>Kather19 + CRCTP</td>
     <td>In-house</td>
-    <td><a href="">pretrained (todo)</a></td>
-    <td><a href="">classification (todo)</a></td>
+    <td><a href="">pretrained (soon)</a></td>
+    <td><a href="">classification (soon)</a></td>
   </tr>
 </table>
 
