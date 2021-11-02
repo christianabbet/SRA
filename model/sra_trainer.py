@@ -269,9 +269,7 @@ class SRATrainer:
             self.writer.add_scalars('AccTop5', {"val_D{}".format(i): accs_top5_eval[i] for i in range(len(accs_top5_eval))}, epoch)
 
             # Check is loss improved to save model
-            # if loss_eval < best_valid_losses:
-            #     best_valid_losses = loss_eval
-            #     self.save(path="best_model_{}_{}.pth".format(epoch, self.prefix))
+            self.save(path="best_model_{}.pth".format(self.prefix))
 
             # Save model each certain amount of epochs
             if (epoch + 1) % self.checkpoint_epochs == 0:
