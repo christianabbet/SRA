@@ -10,8 +10,9 @@ from typing import Optional
 import yaml
 import openslide
 from model.sra import SRACls
-
-from model.utils import get_logger, plot_classification, save_annotation_qupath
+from model.utils import get_logger, plot_classification, build_disrete_cmap, save_annotation_qupath
+from scipy.special import softmax
+from matplotlib import cm
 
 
 def load_wsi(wsi_path: str) -> WholeSlideDataset:
@@ -66,10 +67,10 @@ def main(
 
     # Load model
     logger.debug('Build and load model from: {}'.format(model_path))
-    model = SRACls(**config['model']['parameters'])
-    model.load_state_dict(torch.load(model_path)['model_state_dict'])
-    model.to(device)
-    model.eval()
+    # model = SRACls(**config['model']['parameters'])
+    # model.load_state_dict(torch.load(model_path)['model_state_dict'])
+    # model.to(device)
+    # model.eval()
 
     if not os.path.exists(wsi_path):
         raise FileNotFoundError
@@ -89,59 +90,59 @@ def main(
     logger.debug("Run classification on image ...")
     loader = DataLoader(dataset=wsi, batch_size=config['model']['batch_size'], num_workers=4,
                         shuffle=False, pin_memory=True)
-
-    # Compute classification
-    classification = []
-    metadata = []
-
-    for crops, metas in tqdm(loader):
-
-        # Only consider first magnification with meta data
-        crops = crops[0]
-        [mag, level, tx, ty, cx, cy, bx, by, s_src, s_tar] = metas[0]
-
-        # Send to cuda is available
-        if use_cuda:
-            crops = crops.cuda()
-
-        # Infer class probabilities
-        y_pred = model(crops)
-
-        # Extend results
-        classification.extend(y_pred.detach().cpu().numpy())
-        metadata.extend(
-            np.array([mag.numpy(), level.numpy(), tx.numpy(), ty.numpy(), cx.numpy(), cy.numpy(), bx.numpy(),
-                      by.numpy(), s_src.numpy(), s_tar.numpy()]).T
-        )
-
-    # Save results
-    data = {
-        'name': os.path.basename(wsi_path),
-        'wsi_path': wsi_path,
-        'model_path': model_path,
-        'dataset_name': config['dataset']['name'],
-        'classification_labels': config['dataset']['cls_labels'],
-        'classification': np.array(classification),
-        'metadata_labels': ['mag', 'level', 'tx', 'ty', 'cx', 'cy', 'bx', 'by', 's_src', 's_tar'],
-        'metadata': np.array(metadata),
-    }
-    np.save(file=numpy_path, arr=data)
+    #
+    # # Compute classification
+    # classification = []
+    # metadata = []
+    #
+    # for crops, metas in tqdm(loader):
+    #
+    #     # Only consider first magnification with meta data
+    #     crops = crops[0]
+    #     [mag, level, tx, ty, cx, cy, bx, by, s_src, s_tar] = metas[0]
+    #
+    #     # Send to cuda is available
+    #     if use_cuda:
+    #         crops = crops.cuda()
+    #
+    #     # Infer class probabilities
+    #     y_pred = model(crops)
+    #
+    #     # Extend results
+    #     classification.extend(y_pred.detach().cpu().numpy())
+    #     metadata.extend(
+    #         np.array([mag.numpy(), level.numpy(), tx.numpy(), ty.numpy(), cx.numpy(), cy.numpy(), bx.numpy(),
+    #                   by.numpy(), s_src.numpy(), s_tar.numpy()]).T
+    #     )
+    #
+    # # Save results
+    # data = {
+    #     'name': os.path.basename(wsi_path),
+    #     'wsi_path': wsi_path,
+    #     'model_path': model_path,
+    #     'dataset_name': config['dataset']['name'],
+    #     'classification_labels': config['dataset']['cls_labels'],
+    #     'classification': np.array(classification),
+    #     'metadata_labels': ['mag', 'level', 'tx', 'ty', 'cx', 'cy', 'bx', 'by', 's_src', 's_tar'],
+    #     'metadata': np.array(metadata),
+    # }
+    # np.save(file=numpy_path, arr=data)
 
     # Check if classification and output image exist
     logger.debug("Plot output result of classification ...")
     # Reload data and plot results
     data = np.load(numpy_path, allow_pickle=True).item()
 
-    plot_classification(
-        image=wsi.s.associated_images['thumbnail'],
-        coords_x=data['metadata'][:, 4],
-        coords_y=data['metadata'][:, 5],
-        cls=np.argmax(data['classification'], axis=1),
-        cls_labels=data['classification_labels'],
-        wsi_dim=wsi.level_dimensions[0],
-        save_path=img_path,
-        cmap=data.get('dataset_name', config['dataset']['name']),  # For old version of *.npy files
-    )
+    # plot_classification(
+    #     image=wsi.s.associated_images['thumbnail'],
+    #     coords_x=data['metadata'][:, 4],
+    #     coords_y=data['metadata'][:, 5],
+    #     cls=np.argmax(data['classification'], axis=1),
+    #     cls_labels=data['classification_labels'],
+    #     wsi_dim=wsi.level_dimensions[0],
+    #     save_path=img_path,
+    #     cmap=data.get('dataset_name', config['dataset']['name']),  # For old version of *.npy files
+    # )
 
     logger.debug("Plot output result of detections ...")
     # Correction from metadata offset
@@ -149,6 +150,7 @@ def main(
     offset_y = int(wsi.s.properties.get(openslide.PROPERTY_NAME_BOUNDS_Y, 0))
     # Correction for overlapping tiles
     centering = 0.5*config['wsi']['padding_factor']*data['metadata'][0, -2]
+    dataset_name = data.get('dataset_name', config['dataset']['name'])
 
     # Write classification output overlay for QuPath
     save_annotation_qupath(
@@ -156,11 +158,25 @@ def main(
         ty=data['metadata'][:, 3] - offset_y + centering,
         bx=data['metadata'][:, 6] - offset_x - centering,
         by=data['metadata'][:, 7] - offset_y - centering,
-        labels=np.argmax(data['classification'], axis=1),
-        labels_name=data['classification_labels'],
+        values=np.argmax(data['classification'], axis=1),
+        values_name={k: data['classification_labels'][k] for k in range(len(data['classification_labels']))},
         outpath=os.path.join(img_path[:-4] + "_detection.json"),
-        cmap=data.get('dataset_name', config['dataset']['name']),
+        cmap=build_disrete_cmap(dataset_name),
     )
+
+    for i, cls in enumerate(tqdm(data['classification_labels'], desc='Classes predictions ...')):
+        values = np.clip(softmax(data['classification'], axis=1)[:, i], a_min=0, a_max=0.99)
+        bins = np.linspace(0, 1, 101)
+        save_annotation_qupath(
+            tx=data['metadata'][:, 2] - offset_x + centering,
+            ty=data['metadata'][:, 3] - offset_y + centering,
+            bx=data['metadata'][:, 6] - offset_x - centering,
+            by=data['metadata'][:, 7] - offset_y - centering,
+            values=bins[np.digitize(values, bins)],
+            values_name=bins[np.digitize(values, bins)],
+            outpath=os.path.join(img_path[:-4] + "_{}_detection.json".format(cls)),
+            cmap=cm.get_cmap('inferno'),
+        )
 
     logger.debug("Plots saved: {}".format(os.path.dirname(img_path)))
 
@@ -178,7 +194,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--wsi_path', type=str,
-                        default='TCGA-CK-6747-01Z-00-DX1.7824596c-84db-4bee-b149-cd8f617c285f.svs',
+                        # default='TCGA-CK-6747-01Z-00-DX1.7824596c-84db-4bee-b149-cd8f617c285f.svs',
+                        default='/home/abbet/Desktop/BernCohortPart/TCGA-CK-6747-01Z-00-DX1.7824596c-84db-4bee-b149-cd8f617c285f.svs',
                         help='Path to the WSI file (.mrxs, .svs).')
     parser.add_argument('--model_path', type=str,
                         default='best_model_srame_cls_k19.pth',

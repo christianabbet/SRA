@@ -1,15 +1,13 @@
 import logging
-from typing import Tuple, Optional, List
+from typing import Tuple, Optional, List, Union
 import PIL
 import os
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.colors import ListedColormap, Colormap
-from shapely.ops import cascaded_union
 from shapely.geometry import Polygon
 import json
 import numpy as np
-from tqdm import tqdm
 
 
 def get_logger(logfile='log.log'):
@@ -224,15 +222,12 @@ def build_disrete_cmap(name: str, background: Optional[np.ndarray] = None) -> Co
     return cmap
 
 
-def build_poly(tx: np.ndarray, ty: np.ndarray, bx: np.ndarray, by: np.ndarray) -> List[Polygon]:
+def build_poly(tx: np.ndarray, ty: np.ndarray, bx: np.ndarray, by: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     # Counter clock-wise
     px = np.vstack((tx, bx, bx, tx)).T
     py = np.vstack((ty, ty, by, by)).T
-    polygons = []
-    for i in range(len(px)):
-        polygons.append(Polygon(np.vstack((px[i], py[i])).T))
 
-    return polygons
+    return px, py
 
 
 def save_annotation_qupath(
@@ -240,41 +235,45 @@ def save_annotation_qupath(
         ty: np.ndarray,
         bx: np.ndarray,
         by: np.ndarray,
-        labels: np.ndarray,
-        labels_name: List[str],
+        values: np.ndarray,
+        values_name: Union[np.ndarray, dict],
         outpath: str,
-        cmap: Optional[str] = None,
-        simplify: Optional[bool] = False
-):
+        cmap: Colormap,
+) -> None:
+    """
+
+    Parameters
+    ----------
+    tx: array_like
+    ty: array_like
+    bx: array_like
+    by: array_like
+    values: array_like
+    values_name: array_like
+    outpath: str
+    cmap: Colormap
+
+    """
 
     # Check dimensions
-    if not all(tx.shape == np.array([ty.shape, bx.shape, by.shape, labels.shape])):
+    if not all(tx.shape == np.array([ty.shape, bx.shape, by.shape, values.shape])):
         return
 
-    # Build colormap
-    cmap = build_disrete_cmap(cmap)
-    # Build list of polygons
-    polys = []
-    polys_labels = []
-    for l in tqdm(np.unique(labels), desc="Parsing classes ..."):
-        # Get all detection with specific labels
-        _cls = labels == l
-        # Build shape and simplify the shapes if True
-        _poly = build_poly(tx=tx[_cls], ty=ty[_cls], bx=bx[_cls], by=by[_cls])
-        if simplify:
-            _poly = cascaded_union(_poly)
-        # Extend results
-        polys.extend(_poly)
-        polys_labels.extend(l*np.ones_like(_poly, dtype=int))
+    # Build shape and simplify the shapes if True
+    polys_x, polys_y = build_poly(tx=tx, ty=ty, bx=bx, by=by)
 
     # Extract outer shapes
     coords = {}
-    for i, s in enumerate(polys):
-        x, y = s.exterior.coords.xy
-        color = 255*np.array(cmap(polys_labels[i]))[:3]
+    colors = []
+    clss = []
+    for i in range(len(polys_x)):
+        color = 255*np.array(cmap(values[i]))[:3]
+        colors.append(color)
+        label = values[i] if isinstance(values_name, np.ndarray) else values_name[values[i]]
+        clss.append([label])
         coords['poly{}'.format(i)] = {
-            "coords": np.vstack((x, y)).tolist(),
-            "class": labels_name[polys_labels[i]],
+            "coords": np.vstack((polys_x[i], polys_y[i])).tolist(),
+            "class": str(label),
             "color": [int(color[0]), int(color[1]), int(color[2])]
         }
 

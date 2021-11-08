@@ -40,7 +40,7 @@ conda install -y pytorch==1.6.0 torchvision==0.7.0 -c pytorch
 
 # Install other packages
 conda install -y matplotlib shapely tqdm tensorboard==2.3.0
-pip install albumentations pip install openslide-python
+pip install albumentations openslide-python
 pip install git+https://github.com/lucasb-eyer/pydensecrf.git
 ```
 
@@ -239,9 +239,14 @@ overall, they represent all tissue types equally.
 Expected classification result using SRA-ME model on the selected
 [slide](https://portal.gdc.cancer.gov/files/2d961af6-9f08-4db7-92b2-52b2380cd022) from TCGA cohort.
 
+#### Original WSI
 ![TCGA-CK-6747_overlay](figs/TCGA-CK-6747.jpg)
-![TCGA-CK-6747_overlay](figs/TCGA-CK-6747_overlay.jpg)
 
+#### Multiclass
+![TCGA-CK-6747_overlay](figs/TCGA-CK-6747_multi_overlay.jpg)
+
+#### Tumor Detection Heatmap
+![TCGA-CK-6747_overlay](figs/TCGA-CK-6747_tum_overlay.jpg)
 
 ## Citation
 
