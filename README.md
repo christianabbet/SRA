@@ -21,6 +21,7 @@ Link: [paper single-source (June 2021)](https://openreview.net/forum?id=VO7asaS5
 
 ![Segmentation result](figs/pipeline.jpeg)
 
+---
 ## Usage & requirements
 
 In this section we present how to use SRA to train your own architecture. Please first clone the repo and install the 
@@ -43,6 +44,7 @@ conda install -y matplotlib shapely tqdm tensorboard==2.3.0
 pip install albumentations openslide-python
 pip install git+https://github.com/lucasb-eyer/pydensecrf.git
 ```
+
 
 ### Pretrained models
 
@@ -87,7 +89,7 @@ the classification (source) layer. We indicate the source and target dataset use
   </tr>
 </table>
 
-
+---
 
 ## Training
 
@@ -205,34 +207,17 @@ You can visualize the predictions using [QuPath](https://qupath.github.io/). To 
 2. Open the WSIs image (*.mrsx, *.svs, ...)
 3. Select `Automate->Show script editor`
 4. Copy paste the script located under `SRA/script_qupath/annotation_loader.groovy`
-5. Replace the variable `path` with the path to the json file containing the detection output. This file is generated 
+5. Run the script (`Run->Run` or `CTRL+R`).
+6. Select the json file containing the detection output. This file is generated 
    by the script `infer_wsi_classification.py` mentioned above.
-6. Run the script (`Run->Run` or `CTRL+R`).
 7. Enjoy
 
-The expected output is display below in the results section.
+The expected output is display below in the results section. Note that is the detection is not showing up please make 
+sure you activated filled detection (Press `F` or `view->Fill detections`).
+
+---
 
 ## Results
-
-### t-SNE
-
-We present the t-SNE projection of the results of domain adaptation processes from Kather19 
-to our in-house dataset.
-![Kather19 to inhouse](figs/k19_inhouse_tsne.jpeg)
-
-As well as the multi-source case
-![CRCTP_Kather19 to inhouse](figs/crctp_k19_inhouse_tsne.jpeg)
-
-
-To validate our approach on real case scenario, we perform domain adaptation using our 
-proposed model from Kather19 to whole slide image 
-sections from our in-house dataset. The results are presented here, alongside the original 
-H&E image, their corresponding labels annotated by an expert pathologist, as well as 
-comparative results of previous approaches smoothed using conditional random fields as 
-in [L. Chan](https://github.com/lyndonchan/hsn_v1) (2018). The sections were selected such that, 
-overall, they represent all tissue types equally.
-
-![Segmentation result](figs/roi_wsi.jpeg)
 
 ### WSI Classification 
 
@@ -248,6 +233,28 @@ Expected classification result using SRA-ME model on the selected
 #### Tumor Detection Heatmap
 ![TCGA-CK-6747_overlay](figs/TCGA-CK-6747_tum_overlay.jpg)
 
+### t-SNE
+
+We present the t-SNE projection of the results of domain adaptation processes from Kather19 
+to our in-house dataset.
+![Kather19 to inhouse](figs/k19_inhouse_tsne.jpeg)
+
+As well as the multi-source case
+![CRCTP_Kather19 to inhouse](figs/crctp_k19_inhouse_tsne.jpeg)
+
+### Crop Segmentation 
+
+To validate our approach on real case scenario, we perform domain adaptation using our 
+proposed model from Kather19 to whole slide image 
+sections from our in-house dataset. The results are presented here, alongside the original 
+H&E image, their corresponding labels annotated by an expert pathologist, as well as 
+comparative results of previous approaches smoothed using conditional random fields as 
+in [L. Chan](https://github.com/lyndonchan/hsn_v1) (2018). The sections were selected such that, 
+overall, they represent all tissue types equally.
+
+![Segmentation result](figs/roi_wsi.jpeg)
+
+---
 ## Citation
 
 If you use this work please use the following citations :).
