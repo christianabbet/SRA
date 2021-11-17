@@ -35,7 +35,6 @@ def main(args):
     for i, p in enumerate(dataset_paths):
         # Create dataset
         logger.debug("Load dataset {} from: {}".format(i, p))
-        is_source = i != (len(dataset_paths)-1)  # Is source dataset
         dataset_train_, dataset_val_, _ = build_dataset(
             path=p,
             transform_train=TwoCropsTransform(transform_train),
