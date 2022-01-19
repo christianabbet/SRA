@@ -43,6 +43,7 @@ def load_wsi(wsi_path: str) -> WholeSlideDataset:
 def main(
         wsi_path: str,
         model_path: str,
+        exp_name: str,
         config: dict,
         use_cuda: Optional[bool] = True,
 ) -> None:
@@ -87,9 +88,9 @@ def main(
 
         # put suffix as arg
         logger.debug('Predict output for {}'.format(p))
-        output_dir = os.path.join(os.path.dirname(p), "output", config['suffix'])
-        numpy_path = os.path.join(output_dir, os.path.basename(p) + '_{}.npy'.format(config['suffix']))
-        img_path = os.path.join(output_dir, os.path.basename(p) + '_{}.png'.format(config['suffix']))
+        output_dir = os.path.join(os.path.dirname(p), "output", exp_name)
+        numpy_path = os.path.join(output_dir, os.path.basename(p) + '_{}.npy'.format(exp_name))
+        img_path = os.path.join(output_dir, os.path.basename(p) + '_{}.png'.format(exp_name))
 
         # Create output folder if existing
         if not os.path.exists(output_dir):
@@ -209,8 +210,11 @@ if __name__ == '__main__':
                         default='best_model_srma_cls_k19.pth',
                         help='Path to the WSI file (.mrxs, .svs).')
     parser.add_argument('--config', type=str,
-                        default='conf_wsi_classification.yaml',
+                        default='conf_wsi_classification_k19.yaml',
                         help='Path to the config yaml file.')
+    parser.add_argument('--exp_name', type=str,
+                        default='classification_srma',
+                        help='Name of the experiment.')
 
     args = parser.parse_args()
 
@@ -221,6 +225,7 @@ if __name__ == '__main__':
     main(
         wsi_path=args.wsi_path,
         model_path=args.model_path,
+        exp_name=args.exp_name,
         config=config,
         use_cuda=torch.cuda.is_available()
     )
