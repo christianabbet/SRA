@@ -67,10 +67,10 @@ def main(
 
     # Load model
     logger.debug('Build and load model from: {}'.format(model_path))
-    # model = SRACls(**config['model']['parameters'])
-    # model.load_state_dict(torch.load(model_path)['model_state_dict'])
-    # model.to(device)
-    # model.eval()
+    model = SRACls(**config['model']['parameters'])
+    model.load_state_dict(torch.load(model_path)['model_state_dict'])
+    model.to(device)
+    model.eval()
 
     if not os.path.exists(wsi_path):
         raise FileNotFoundError
@@ -91,58 +91,58 @@ def main(
     loader = DataLoader(dataset=wsi, batch_size=config['model']['batch_size'], num_workers=4,
                         shuffle=False, pin_memory=True)
     #
-    # # Compute classification
-    # classification = []
-    # metadata = []
-    #
-    # for crops, metas in tqdm(loader):
-    #
-    #     # Only consider first magnification with meta data
-    #     crops = crops[0]
-    #     [mag, level, tx, ty, cx, cy, bx, by, s_src, s_tar] = metas[0]
-    #
-    #     # Send to cuda is available
-    #     if use_cuda:
-    #         crops = crops.cuda()
-    #
-    #     # Infer class probabilities
-    #     y_pred = model(crops)
-    #
-    #     # Extend results
-    #     classification.extend(y_pred.detach().cpu().numpy())
-    #     metadata.extend(
-    #         np.array([mag.numpy(), level.numpy(), tx.numpy(), ty.numpy(), cx.numpy(), cy.numpy(), bx.numpy(),
-    #                   by.numpy(), s_src.numpy(), s_tar.numpy()]).T
-    #     )
-    #
-    # # Save results
-    # data = {
-    #     'name': os.path.basename(wsi_path),
-    #     'wsi_path': wsi_path,
-    #     'model_path': model_path,
-    #     'dataset_name': config['dataset']['name'],
-    #     'classification_labels': config['dataset']['cls_labels'],
-    #     'classification': np.array(classification),
-    #     'metadata_labels': ['mag', 'level', 'tx', 'ty', 'cx', 'cy', 'bx', 'by', 's_src', 's_tar'],
-    #     'metadata': np.array(metadata),
-    # }
-    # np.save(file=numpy_path, arr=data)
+    # Compute classification
+    classification = []
+    metadata = []
+
+    for crops, metas in tqdm(loader):
+
+        # Only consider first magnification with meta data
+        crops = crops[0]
+        [mag, level, tx, ty, cx, cy, bx, by, s_src, s_tar] = metas[0]
+
+        # Send to cuda is available
+        if use_cuda:
+            crops = crops.cuda()
+
+        # Infer class probabilities
+        y_pred = model(crops)
+
+        # Extend results
+        classification.extend(y_pred.detach().cpu().numpy())
+        metadata.extend(
+            np.array([mag.numpy(), level.numpy(), tx.numpy(), ty.numpy(), cx.numpy(), cy.numpy(), bx.numpy(),
+                      by.numpy(), s_src.numpy(), s_tar.numpy()]).T
+        )
+
+    # Save results
+    data = {
+        'name': os.path.basename(wsi_path),
+        'wsi_path': wsi_path,
+        'model_path': model_path,
+        'dataset_name': config['dataset']['name'],
+        'classification_labels': config['dataset']['cls_labels'],
+        'classification': np.array(classification),
+        'metadata_labels': ['mag', 'level', 'tx', 'ty', 'cx', 'cy', 'bx', 'by', 's_src', 's_tar'],
+        'metadata': np.array(metadata),
+    }
+    np.save(file=numpy_path, arr=data)
 
     # Check if classification and output image exist
     logger.debug("Plot output result of classification ...")
     # Reload data and plot results
     data = np.load(numpy_path, allow_pickle=True).item()
 
-    # plot_classification(
-    #     image=wsi.s.associated_images['thumbnail'],
-    #     coords_x=data['metadata'][:, 4],
-    #     coords_y=data['metadata'][:, 5],
-    #     cls=np.argmax(data['classification'], axis=1),
-    #     cls_labels=data['classification_labels'],
-    #     wsi_dim=wsi.level_dimensions[0],
-    #     save_path=img_path,
-    #     cmap=data.get('dataset_name', config['dataset']['name']),  # For old version of *.npy files
-    # )
+    plot_classification(
+        image=wsi.s.associated_images['thumbnail'],
+        coords_x=data['metadata'][:, 4],
+        coords_y=data['metadata'][:, 5],
+        cls=np.argmax(data['classification'], axis=1),
+        cls_labels=data['classification_labels'],
+        wsi_dim=wsi.level_dimensions[0],
+        save_path=img_path,
+        cmap=data.get('dataset_name', config['dataset']['name']),  # For old version of *.npy files
+    )
 
     logger.debug("Plot output result of detections ...")
     # Correction from metadata offset
@@ -194,11 +194,10 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--wsi_path', type=str,
-                        # default='TCGA-CK-6747-01Z-00-DX1.7824596c-84db-4bee-b149-cd8f617c285f.svs',
-                        default='/home/abbet/Desktop/BernCohortPart/TCGA-CK-6747-01Z-00-DX1.7824596c-84db-4bee-b149-cd8f617c285f.svs',
+                        default='TCGA-CK-6747-01Z-00-DX1.7824596c-84db-4bee-b149-cd8f617c285f.svs',
                         help='Path to the WSI file (.mrxs, .svs).')
     parser.add_argument('--model_path', type=str,
-                        default='best_model_srame_cls_k19.pth',
+                        default='best_model_srma_cls_k19.pth',
                         help='Path to the WSI file (.mrxs, .svs).')
     parser.add_argument('--config', type=str,
                         default='conf_wsi_classification.yaml',

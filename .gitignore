@@ -3,6 +3,7 @@
 
 # Related to current project
 data/*
+models/*.pth
 runs/*
 *.tar
 *.npy

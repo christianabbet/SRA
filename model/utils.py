@@ -206,6 +206,19 @@ def build_disrete_cmap(name: str, background: Optional[np.ndarray] = None) -> Co
             [55, 126, 184],  # Blue - Stroma
             [228, 26, 28],  # Red - Tumor
         ]) / 255
+    elif name == 'kather19crctp':
+        colors = np.array([
+            [247, 129, 191],  # Pink - Adipose
+            [153, 153, 153],  # Gray - Back
+            [255, 255, 51],  # Yellow - Debris
+            [152, 78, 160],  # Purple - Lymphocytes
+            [255, 127, 0],  # Orange - Mucus
+            [23, 190, 192],  # Cyan - Muscle
+            [166, 86, 40],  # Brown - Normal mucosa
+            [55, 126, 184],  # Blue - Stroma
+            [228, 26, 28],  # Red - Tumor
+            [77, 167, 77],  # Green - Complex Stroma
+        ]) / 255
     elif name == 'embedding':
         colors = np.array([
             [1.0, 0.6, 0.333],  # Orange (src)
