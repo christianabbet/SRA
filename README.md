@@ -17,9 +17,9 @@ tissue type classification and further validate our approach on our in-house cli
 available open-source:
 
 Link: [paper single-source (June 2021)](https://openreview.net/forum?id=VO7asaS5GUk), 
-[paper multi-source (August 2021)](https://arxiv.org/abs/2108.09178)
+[paper multi-source (January 2022)](https://arxiv.org/abs/2108.09178)
 
-![Segmentation result](figs/pipeline.jpeg)
+![Pipeline](figs/pipeline.png)
 
 ---
 ## Usage & requirements
@@ -57,35 +57,40 @@ the classification (source) layer. We indicate the source and target dataset use
     <th>Arch</th>
     <th>Source</th>
     <th>Target</th>
+    <th>n classes</th>
     <th colspan="2">download</th>
   </tr>
   <tr>
     <td>sra</td>
     <td>Kather19</td>
     <td>In-house</td>
-    <td><a href="https://drive.google.com/file/d/1BZ6sIV6Dd-XG6jivmo0u1RYyW7hDpRmr/view?usp=sharing">pretrained</a></td>
-    <td><a href="https://drive.google.com/file/d/1xtDFVHADiJaiPmuuaQyllIevoFwWwJMY/view?usp=sharing">classification</a></td>
+    <td>9</td>
+    <td><a href="https://drive.google.com/file/d/1U8L45e38XKVonrrQVlMeb_twje4_kY_S/view?usp=sharing">pretrained</a></td>
+    <td><a href="https://drive.google.com/file/d/1h4J4t4C7frYb_mL6FeRGCi0f_MhCutHp/view?usp=sharing">classification</a></td>
   </tr>
   <tr>
-    <td>sra-me</td>
+    <td>srma</td>
     <td>Kather19</td>
     <td>In-house</td>
-    <td><a href="https://drive.google.com/file/d/1SZaBE-1o1QdpA1lObbzPNrJ294wg6sF8/view?usp=sharing">pretrained</a></td>
-    <td><a href="https://drive.google.com/file/d/1ZT2dGWcQ_qDuhxsNOnzg1jvY-RGaKY6m/view?usp=sharing">classification</a></td>
+    <td>9</td>
+    <td><a href="https://drive.google.com/file/d/1QnWbRTF6xme8xovTvZGBFnCU-8abENI2/view?usp=sharing">pretrained</a></td>
+    <td><a href="https://drive.google.com/file/d/1B3c4eBcYOZQMcIF-U8Dfu0UM7DRO0qMu/view?usp=sharing">classification</a></td>
   </tr>
   <tr>
     <td>sra</td>
     <td>Kather19 + CRCTP</td>
     <td>In-house</td>
-    <td><a href="">pretrained (soon)</a></td>
-    <td><a href="">classification (soon)</a></td>
+    <td>10</td>
+    <td><a href="https://drive.google.com/file/d/1hAnLMzdCBRLiN3uWVlTDuT7A1sdKZSx2/view?usp=sharing">pretrained</a></td>
+    <td><a href="https://drive.google.com/file/d/177OrAq0dOd6IoifUr5BSry0s_HnV1c6-/view?usp=sharing">classification</a></td>
   </tr>
   <tr>
-    <td>sra-me</td>
+    <td>srma</td>
     <td>Kather19 + CRCTP</td>
     <td>In-house</td>
-    <td><a href="">pretrained (soon)</a></td>
-    <td><a href="">classification (soon)</a></td>
+    <td>10</td>
+    <td><a href="https://drive.google.com/file/d/1MfALpMByH-2mTGwYCJt6bz7ydybZHaCT/view?usp=sharing">pretrained</a></td>
+    <td><a href="https://drive.google.com/file/d/1vQjlr6SB0yTHLhuQNjB-gJM5S3TjI-0V/view?usp=sharing">classification</a></td>
   </tr>
 </table>
 
@@ -195,7 +200,7 @@ we show how to classify a [slide](https://portal.gdc.cancer.gov/files/2d961af6-9
 ```bash
 python infer_wsi_classification.py \
   --wsi_path TCGA-CK-6747-01Z-00-DX1.7824596c-84db-4bee-b149-cd8f617c285f.svs \
-  --model_path best_model_srame_cls_k19.pth
+  --model_path best_model_srma_cls_k19.pth
 ```
 
 You can find the predictions under the `òutputs` folder
@@ -221,7 +226,7 @@ sure you activated filled detection (Press `F` or `view->Fill detections`).
 
 ### WSI Classification 
 
-Expected classification result using SRA-ME model on the selected
+Expected classification result using SRMA model on the selected
 [slide](https://portal.gdc.cancer.gov/files/2d961af6-9f08-4db7-92b2-52b2380cd022) from TCGA cohort.
 
 #### Original WSI
@@ -253,6 +258,8 @@ in [L. Chan](https://github.com/lyndonchan/hsn_v1) (2018). The sections were sel
 overall, they represent all tissue types equally.
 
 ![Segmentation result](figs/roi_wsi.jpeg)
+
+![Segmentation cstr result](figs/roi_wsi_cstr.jpeg)
 
 ---
 ## Citation
