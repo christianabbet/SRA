@@ -9,7 +9,7 @@ import argparse
 from typing import Optional
 import yaml
 import openslide
-from model.sra import SRACls
+from model.sra import SRACls, ResNetCls
 from model.utils import get_logger, plot_classification, build_disrete_cmap, save_annotation_qupath
 from scipy.special import softmax
 from matplotlib import cm
@@ -70,6 +70,7 @@ def main(
     # Load model
     logger.debug('Build and load model from: {}'.format(model_path))
     model = SRACls(**config['model']['parameters'])
+    # model = ResNetCls(**config['model']['parameters'])
     model.load_state_dict(torch.load(model_path)['model_state_dict'])
     model.to(device)
     model.eval()

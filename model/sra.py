@@ -419,3 +419,58 @@ class SRACls(nn.Module):
         # compute query features and normalize
         y = self.encoder_q(im)  # queries: NxC
         return y
+
+
+class ResNetCls(nn.Module):
+    """
+    Build a SRA based on MoCo (https://arxiv.org/abs/1911.05722) model with: a query encoder, a key encoder,
+    and a queue.
+    """
+    def __init__(self, base_encoder='resnet18', n_cls=2, device="cpu"):
+        """
+        base_encoder: str
+            Encoder to generate the feature space.
+        n_cls: int
+            Number of output classes. Default value is 2.
+        dim: int
+            Dimension of the feature space after projection head. Default value is 128.
+        device: str
+            Device to use. Default value is "cpu". Warning cpu training is really slow.
+        """
+
+        super(ResNetCls, self).__init__()
+        self.device = device
+
+        # create the encoders
+        # num_classes is the output fc dimension
+        try:
+            base_encoder = getattr(models, base_encoder)
+        except AttributeError:
+            # Attribute not found, use default ResNet18
+            base_encoder = models.resnet18
+        self.encoder_q = base_encoder(pretrained=True)
+
+        dim_encoder = self.encoder_q.fc.in_features
+        self.encoder_q.fc = nn.Sequential(
+            nn.Linear(dim_encoder, n_cls),
+        )
+
+    def forward(self, im):
+        """
+        Forward path for input image im_q and im_k. Here we define B = Batch size, H = height of the image, W = width
+        of the image, N_cls = number of output classes.
+
+        Parameters
+        ----------
+        im: Tensor of shape (B, 3, H, W)
+            A batch of images.
+
+        Returns
+        -------
+        y: Tensor of shape (B, n_cls)
+            Embedding of query images.
+        """
+
+        # compute query features and normalize
+        y = self.encoder_q(im)  # queries: NxC
+        return y
