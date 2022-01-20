@@ -89,8 +89,8 @@ def main(
             # put suffix as arg
             logger.debug('Predict output for {}'.format(p))
             output_dir = os.path.join(os.path.dirname(p), "output", exp_name)
-            numpy_path = os.path.join(output_dir, os.path.basename(p) + '_{}.npy'.format(exp_name))
-            img_path = os.path.join(output_dir, os.path.basename(p) + '_{}.png'.format(exp_name))
+            numpy_path = os.path.join(output_dir, os.path.basename(p).replace(' ', '') + '_{}.npy'.format(exp_name))
+            img_path = os.path.join(output_dir, os.path.basename(p).replace(' ', '') + '_{}.png'.format(exp_name))
 
             # Create output folder if existing
             if not os.path.exists(output_dir):
