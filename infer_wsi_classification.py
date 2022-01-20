@@ -14,6 +14,7 @@ from model.utils import get_logger, plot_classification, build_disrete_cmap, sav
 from scipy.special import softmax
 from matplotlib import cm
 from glob import glob
+from PIL.Image import fromarray
 
 
 def load_wsi(wsi_path: str) -> WholeSlideDataset:
@@ -89,8 +90,8 @@ def main(
             # put suffix as arg
             logger.debug('Predict output for {}'.format(p))
             output_dir = os.path.join(os.path.dirname(p), "output", exp_name)
-            numpy_path = os.path.join(output_dir, os.path.basename(p).replace(' ', '') + '_{}.npy'.format(exp_name))
-            img_path = os.path.join(output_dir, os.path.basename(p).replace(' ', '') + '_{}.png'.format(exp_name))
+            numpy_path = os.path.join(output_dir, os.path.basename(p) + '_{}.npy'.format(exp_name))
+            img_path = os.path.join(output_dir, os.path.basename(p) + '_{}.png'.format(exp_name))
 
             # Create output folder if existing
             if not os.path.exists(output_dir):
@@ -144,8 +145,15 @@ def main(
             if args.plot:
                 # Check if classification and output image exist
                 logger.debug("Plot result of classification ...")
+                if 'thumbnail' not in wsi.s.associated_images:
+                    # Append dummy
+                    logger.error("!!! No thumbnail in metadata ...")
+                    thumbnail = fromarray(np.zeros((wsi.level_dimensions[-2][0], wsi.level_dimensions[-2][1], 3), dtype=np.uint8))
+                else:
+                    thumbnail = wsi.s.associated_images['thumbnail']
+
                 plot_classification(
-                    image=wsi.s.associated_images['thumbnail'],
+                    image=thumbnail,
                     coords_x=data['metadata'][:, 4],
                     coords_y=data['metadata'][:, 5],
                     cls=np.argmax(data['classification'], axis=1),
