@@ -2,7 +2,7 @@
 # Configuration relative to the model
 model:
     # Size of the batch
-    batch_size: 32
+    batch_size: 128
     # Parameters of the model itself
     parameters:
         # Number of output classes
