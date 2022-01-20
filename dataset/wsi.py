@@ -76,7 +76,7 @@ class WholeSlideDataset(Dataset):
         """
 
         extension = pathlib.Path(path).suffix
-        if extension != '.svs' and extension != '.mrxs' and extension != '.tif':
+        if extension != '.svs' and extension != '.mrxs' and extension != '.tif' and extension != '.ndpi':
             raise NotImplementedError("Only *.svs, *.tif and *.mrxs files supported")
 
         # Load and create slide and affect default values
