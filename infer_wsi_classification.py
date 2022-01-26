@@ -25,7 +25,7 @@ def load_wsi(wsi_path: str) -> WholeSlideDataset:
         # Define transformation. Same for all slides
         transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.742, 0.616, 0.731], std=[0.211, 0.274, 0.202]),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
 
         wsi = WholeSlideDataset(
