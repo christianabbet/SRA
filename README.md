@@ -215,7 +215,7 @@ To run the prediction on multiple slides, you can use unix-like queries. Be care
 the ''wsi_path'' argument.
 ```bash
 python infer_wsi_classification.py \
-  --wsi_path "/PATH/TO/DATA*.svs" \
+  --wsi_path "/PATH/TO/DATA/*.svs" \
   --model_path best_model_srma_cls_k19.pth \
   --config conf_wsi_classification_k19.yaml
 ```
