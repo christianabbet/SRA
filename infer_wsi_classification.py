@@ -117,11 +117,11 @@ def main(
                     crops = crops.cuda()
 
                 # Infer class probabilities
-                with torch.no_grad:
+                with torch.no_grad():
                     y_pred = model(crops)
 
                 # Extend results
-                classification.extend(y_pred.detach().cpu().numpy())
+                classification.extend(y_pred.cpu().numpy())
                 metadata.extend(
                     np.array([mag.numpy(), level.numpy(), tx.numpy(), ty.numpy(), cx.numpy(), cy.numpy(), bx.numpy(),
                               by.numpy(), s_src.numpy(), s_tar.numpy()]).T
