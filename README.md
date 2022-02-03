@@ -24,7 +24,7 @@ Link: [paper single-source (June 2021)](https://openreview.net/forum?id=VO7asaS5
 ---
 ## Usage & requirements
 
-In this section we present how to use SRA to train your own architecture. Please first clone the repo and install the 
+In this section, we present how to use SRA to train your own architecture. Please, first clone the repo and install the 
 dependencies.
 
 ```bash
@@ -155,9 +155,9 @@ mv Fold2 data/CRCTP
 
 ###  Step 2: Create your Dataset (target)
 
-To perform domain alignment we need to create a target set. To do so either use your own dataset or generate one using 
+To perform domain alignment, we need to create a target set. To do so, either use your own dataset or generate one using 
 the following script. The `data_query` should indicate the query to the target whole slides images (*.mrxs, *.svs, ...). 
-The script extracts from each whole slide `n_subset` tiles picked at random from the foreground and save them under 
+The script extracts from each whole slide `n_subset` tiles picked at random from the foreground and saves them under 
 `export` path.
 
 ```bash
@@ -220,11 +220,11 @@ python infer_wsi_classification.py \
   --config conf_wsi_classification_k19.yaml
 ```
 
-You can find the predictions under the `òutputs` folder
+You can find the predictions under the `outputs` folder.
 
 ### Step 5: QuPath Visualization
 
-You can visualize the predictions using [QuPath](https://qupath.github.io/). To do so follow the steps:
+You can visualize the predictions using [QuPath](https://qupath.github.io/). To do so, follow the steps:
 1. Open QuPath 
 2. Open the WSIs image (*.mrsx, *.svs, ...)
 3. Select `Automate->Show script editor`
@@ -234,7 +234,7 @@ You can visualize the predictions using [QuPath](https://qupath.github.io/). To 
    by the script `infer_wsi_classification.py` mentioned above.
 7. Enjoy
 
-The expected output is display below in the results section. Note that is the detection is not showing up please make 
+The expected output is displayed below in the results section. Note that if the detection is not showing up, please make 
 sure you activated filled detection (Press `F` or `view->Fill detections`).
 
 ---
@@ -243,7 +243,7 @@ sure you activated filled detection (Press `F` or `view->Fill detections`).
 
 ### WSI Classification 
 
-Expected classification result using SRMA model on the selected
+The expected classification result using SRMA model on the selected
 [slide](https://portal.gdc.cancer.gov/files/2d961af6-9f08-4db7-92b2-52b2380cd022) from TCGA cohort.
 
 #### Original WSI
@@ -266,7 +266,7 @@ As well as the multi-source case
 
 ### Crop Segmentation 
 
-To validate our approach on real case scenario, we perform domain adaptation using our 
+To validate our approach on a real case scenario, we perform domain adaptation using our 
 proposed model from Kather19 to whole slide image 
 sections from our in-house dataset. The results are presented here, alongside the original 
 H&E image, their corresponding labels annotated by an expert pathologist, as well as 
@@ -281,7 +281,7 @@ overall, they represent all tissue types equally.
 ---
 ## Citation
 
-If you use this work please use the following citations :).
+If you use this work, please use the following citations :).
 
 ```text
 # Single-source domain adaptation
@@ -294,7 +294,7 @@ If you use this work please use the following citations :).
     url={https://openreview.net/forum?id=VO7asaS5GUk}
 }
 
-# Multi-source domain adaptation (generalization of previous work)
+# Multi-source domain adaptation (a generalization of previous work to multi-source domains)
 @article{
     abbet2021selfrulemulti,
     title={Self-Rule to Adapt: Generalized Multi-source Feature Learning Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Detection},
