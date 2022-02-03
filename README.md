@@ -212,7 +212,7 @@ python infer_wsi_classification.py \
 ```
 
 To run the prediction on multiple slides, you can use unix-like queries. Be careful to use the **quotes** around 
-the ''wsi_path'' argument.
+the `wsi_path` argument as below.
 ```bash
 python infer_wsi_classification.py \
   --wsi_path "/PATH/TO/DATA/*.svs" \
