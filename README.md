@@ -198,9 +198,26 @@ we show how to classify a [slide](https://portal.gdc.cancer.gov/files/2d961af6-9
 ) taken from the TCGA cohort. The slides are available for download.
 
 ```bash
+# Infer WSI using K19 label
 python infer_wsi_classification.py \
   --wsi_path TCGA-CK-6747-01Z-00-DX1.7824596c-84db-4bee-b149-cd8f617c285f.svs \
-  --model_path best_model_srma_cls_k19.pth
+  --model_path best_model_srma_cls_k19.pth \
+  --config conf_wsi_classification_k19.yaml
+
+# Infer WSI using K19+CRCTP label
+python infer_wsi_classification.py \
+  --wsi_path TCGA-CK-6747-01Z-00-DX1.7824596c-84db-4bee-b149-cd8f617c285f.svs \
+  --model_path best_model_srma_cls_k19crctp.pth \
+  --config conf_wsi_classification_k19crctp.yaml
+```
+
+To run the prediction on multiple slides, you can use unix-like queries. Be careful to use the **quotes** around 
+the ''wsi_path'' argument.
+```bash
+python infer_wsi_classification.py \
+  --wsi_path "/PATH/TO/DATA*.svs" \
+  --model_path best_model_srma_cls_k19.pth \
+  --config conf_wsi_classification_k19.yaml
 ```
 
 You can find the predictions under the `òutputs` folder
