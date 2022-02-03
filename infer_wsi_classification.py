@@ -83,12 +83,12 @@ def main(
         wsis_path = glob(wsi_path)
 
     # Iterate over slides
-    for p in wsis_path:
+    for i, p in enumerate(wsis_path):
 
         try:
 
             # put suffix as arg
-            logger.debug('Predict output for {}'.format(p))
+            logger.debug('[{}/{}] Run classification {}'.format(i+1, len(wsis_path), p))
             output_dir = os.path.join(os.path.dirname(p), "output", exp_name)
             numpy_path = os.path.join(output_dir, os.path.basename(p) + '_{}.npy'.format(exp_name))
             img_path = os.path.join(output_dir, os.path.basename(p) + '_{}.png'.format(exp_name))
