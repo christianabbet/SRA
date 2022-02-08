@@ -63,8 +63,8 @@ if __name__ == '__main__':
                         help='Export newly created set to folder')
     parser.add_argument('--n_subset', dest='n_subset', type=int, default=np.inf,
                         help='Number of patches to consider per slide')
-    parser.add_argument('--size_limit', dest='size_limit', type=int, default=o,
-                        help='Size limit for WSIs. Could be useful to avoid low res images.')
+    parser.add_argument('--size_limit', dest='size_limit', type=int, default=0,
+                        help='Size limit for WSIs (in MB). Could be useful to avoid low res images.')
     args = parser.parse_args()
 
     # Load config file
