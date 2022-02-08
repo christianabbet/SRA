@@ -7,13 +7,19 @@ import argparse
 import os
 
 
-def main(data_query: str, export: str, n_subset: int):
+def main(data_query: str, export: str, n_subset: int, size_limit: int):
     wsi_paths = glob(data_query)
 
     for n, p in enumerate(wsi_paths):
 
         print("[{}/{}]: {}".format(n+1, len(wsi_paths), p))
         try:
+
+            # If file os too small
+            if os.path.getsize(p)//1e6 < size_limit:
+                print('Skip slide too small')
+                continue
+
             output_subfolder = os.path.join(export, os.path.basename(p))
             os.makedirs(output_subfolder, exist_ok=True)
 
@@ -57,8 +63,10 @@ if __name__ == '__main__':
                         help='Export newly created set to folder')
     parser.add_argument('--n_subset', dest='n_subset', type=int, default=np.inf,
                         help='Number of patches to consider per slide')
+    parser.add_argument('--size_limit', dest='size_limit', type=int, default=o,
+                        help='Size limit for WSIs. Could be useful to avoid low res images.')
     args = parser.parse_args()
 
     # Load config file
 
-    main(args.data_query, args.export, args.n_subset)
+    main(args.data_query, args.export, args.n_subset, args.size_limit)
