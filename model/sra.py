@@ -20,7 +20,8 @@ class SRA(nn.Module):
             n_dataset: Optional[int] = 2,
             device: Optional[float] = "cpu",
             mean_entropy: Optional[bool] = True,
-            force_multi_source: Optional[float] = False,
+            mi: Optional[float] = False,
+            ms: Optional[float] = False,
     ):
         """
         base_encoder: func
@@ -49,7 +50,8 @@ class SRA(nn.Module):
         self.n_dataset = n_dataset
         self.device = device
         self.mean_entropy = mean_entropy
-        self.force_multi_source = force_multi_source
+        self.mi = mi
+        self.ms = ms
         self.loss = nn.CrossEntropyLoss(reduction='sum').to(device=self.device)
 
         try:
@@ -239,26 +241,53 @@ class SRA(nn.Module):
         labels_ind = []
         h_crd = []
 
-        for i in range(self.n_dataset):
-            l_ins_pos_ = torch.einsum('nc,nc->n', [q[d_set == i], k[d_set == i]]).unsqueeze(-1)
-            l_ins_neg_ = torch.einsum('nc,ck->nk', [q[d_set == i], queue[:, queue_dataset == i]])
+        if self.mi:
+            # All source and target have the same importance -> iterate over all of them
+            for i in range(self.n_dataset):
+                l_ins_pos_ = torch.einsum('nc,nc->n', [q[d_set == i], k[d_set == i]]).unsqueeze(-1)
+                l_ins_neg_ = torch.einsum('nc,ck->nk', [q[d_set == i], queue[:, queue_dataset == i]])
+                logits_ind_ = torch.cat([l_ins_pos_, l_ins_neg_], dim=1) / self.T
+                labels_ind_ = torch.zeros(logits_ind_.shape[0], dtype=torch.long, device=self.device)
+                logits_ind.append(logits_ind_)
+                labels_ind.append(labels_ind_)
+        else:
+            # Merge source together, optimize only grouped sources and target alone
+            # Source
+            l_ins_pos_ = torch.einsum('nc,nc->n', [q[d_set != (self.n_dataset-1)], k[d_set != (self.n_dataset-1)]]).unsqueeze(-1)
+            l_ins_neg_ = torch.einsum('nc,ck->nk', [q[d_set != (self.n_dataset-1)], queue[:, queue_dataset != (self.n_dataset-1)]])
+            logits_ind_ = torch.cat([l_ins_pos_, l_ins_neg_], dim=1) / self.T
+            labels_ind_ = torch.zeros(logits_ind_.shape[0], dtype=torch.long, device=self.device)
+            logits_ind.append(logits_ind_)
+            labels_ind.append(labels_ind_)
+            # Target
+            l_ins_pos_ = torch.einsum('nc,nc->n', [q[d_set == (self.n_dataset-1)], k[d_set == (self.n_dataset-1)]]).unsqueeze(-1)
+            l_ins_neg_ = torch.einsum('nc,ck->nk', [q[d_set == (self.n_dataset-1)], queue[:, queue_dataset == (self.n_dataset-1)]])
             logits_ind_ = torch.cat([l_ins_pos_, l_ins_neg_], dim=1) / self.T
             labels_ind_ = torch.zeros(logits_ind_.shape[0], dtype=torch.long, device=self.device)
             logits_ind.append(logits_ind_)
             labels_ind.append(labels_ind_)
 
-        # 2. Cross-domain self-supervision
-        for i in range(self.n_dataset - 1):
+        # 2 Compute size of source and target samples
+        n = [l.shape[0] for l in logits_ind]
+        ns = np.sum(n[:-1])
+        nt = n[-1]
+
+        # 3. In-domain Self-supervision loss
+        loss_ind = [self.loss(l, t) for l, t in zip(logits_ind, labels_ind)]
+        loss_ind = (1. / (ns + nt)) * torch.stack(loss_ind).sum()
+
+        # 4. Cross-domain self-supervision
+        for i in range(self.n_dataset-1):
             # Cross mapping - last considered as target
             h_crd_di_to_tar = self.compute_h_crd(
                 q=q[d_set == i],
                 k=k[d_set == i],
-                queue=queue[:, queue_dataset == self.n_dataset - 1]
+                queue=queue[:, queue_dataset == self.n_dataset-1]
             )
 
             h_crd_tar_to_di = self.compute_h_crd(
-                q=q[d_set == self.n_dataset - 1],
-                k=k[d_set == self.n_dataset - 1],
+                q=q[d_set == self.n_dataset-1],
+                k=k[d_set == self.n_dataset-1],
                 queue=queue[:, queue_dataset == i]
             )
 
@@ -277,8 +306,8 @@ class SRA(nn.Module):
                 )
 
                 h_crd.extend([
-                    (1 / 2) * (h_crd_di_to_tar + h_crd_di_to_tar_),
-                    (1 / 2) * (h_crd_tar_to_di + h_crd_tar_to_di_)
+                    (1/2)*(h_crd_di_to_tar + h_crd_di_to_tar_),
+                    (1/2)*(h_crd_tar_to_di + h_crd_tar_to_di_)
                 ])
 
             # Use mean entropy using only the query
@@ -288,79 +317,27 @@ class SRA(nn.Module):
                     h_crd_tar_to_di
                 ])
 
-        # 3 Compute size of source and target samples
-        n = [l.shape[0] for l in logits_ind]
-        ns = np.sum(n[:-1])
-        nt = n[-1]
-
-        # 4. In-domain Self-supervision loss
-        loss_ind = [self.loss(l, t) for l, t in zip(logits_ind, labels_ind)]
-        loss_ind = (1. / (ns + nt)) * torch.stack(loss_ind).sum()
-
         # 5. Cross-domain self-supervision loss
         if s2h_topk_r != 0:
             # To select the top-k we gather the information across datasets. Meaning if we have 2 source dataset we
             # look for the best target similarities across both source dataset and not for each source.
-            if not self.force_multi_source:
+            if self.ms:
+                # Option 2 - CRD for each entry
+                loss_crd = [h[h.argsort()[:int(s2h_topk_r * len(h))]].sum(dim=0) for h in h_crd]
+                loss_crd = torch.stack(loss_crd).sum()
+            else:
                 # Option 1 - CRD across domain
                 h_crd_s2t = torch.cat(h_crd[0::2])
                 h_crd_t2s = torch.cat(h_crd[1::2])
                 loss_crc_src_to_tar = h_crd_s2t[h_crd_s2t.argsort()[:int(s2h_topk_r * len(h_crd_s2t))]].sum(dim=0)
                 loss_crc_tar_to_src = h_crd_t2s[h_crd_t2s.argsort()[:int(s2h_topk_r * len(h_crd_t2s))]].sum(dim=0)
                 loss_crd = torch.stack([loss_crc_src_to_tar, loss_crc_tar_to_src]).sum()
-            else:
-                # Option 2 - CRD for each entry
-                loss_crd = [h[h.argsort()[:int(s2h_topk_r * len(h))]].sum(dim=0) for h in h_crd]
-                loss_crd = torch.stack(loss_crd).sum()
             # Aggregate results
             loss_crd = (1. / (ns + (self.n_dataset-1) * nt) / s2h_topk_r) * loss_crd.sum()
         else:
             loss_crd = torch.tensor(0, dtype=torch.float32, device=self.device)
 
         return loss_ind, loss_crd, logits_ind, labels_ind, h_crd
-
-    def compute_loss_moco(self, q, k, queue):
-        """
-         Compute the loss of the MoCo model. D is the number of datasets. Ni is the number of sample
-         from the i-th dataset and Qi the number of negative linked to the i-th dataset.
-
-         Parameters
-         ----------
-         q: Tensor of shape (B, Z)
-             Embedding of query images.
-         k: Tensor of shape (B, Z)
-             Embedding of batch images.
-         queue: Tensor of shape (Z, K)
-             Queue of previously computed negative examples.
-
-         Returns
-         -------
-         loss: Tensor (1,)
-             MoCo loss
-        logits_ind: List of Tensor of shape (D, Ni, Qi)
-            Computed logits (non normalized probabilities).
-        labels_ind: List od Tensor of shape (D, Ni)
-            Labels for the logit. List of 0s.
-         """
-
-        # compute logits
-        # Einstein sum is more intuitive
-        # positive logits: Nx1
-        l_pos = torch.einsum('nc,nc->n', [q, k]).unsqueeze(-1)
-        # negative logits: NxK
-        l_neg = torch.einsum('nc,ck->nk', [q, queue])
-
-        # logits: Nx(1+K)
-        logits = torch.cat([l_pos, l_neg], dim=1)
-
-        # apply temperature
-        logits /= self.T
-
-        # labels: positive key indicators
-        labels = torch.zeros(logits.shape[0], dtype=torch.long).cuda()
-
-        # dequeue and enqueue
-        return self.criterion(logits, labels), [logits], [labels]
 
 
 class SRACls(nn.Module):

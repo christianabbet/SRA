@@ -29,6 +29,8 @@ def main(args):
     use_lcrd = bool(args.lcrd == 'yes')
     use_e2h = bool(args.e2h == 'yes')
     use_me = bool(args.me == 'yes')
+    mi = bool(args.mi == 'yes')
+    ms = bool(args.ms == 'yes')
 
     dataset_train = []
     dataset_val = []
@@ -68,6 +70,8 @@ def main(args):
         n_dataset=len(dataset_train),
         device=args.device,
         mean_entropy=use_me,
+        mi=mi,
+        ms=ms,
     )
 
     trainer = SRATrainer(
@@ -147,6 +151,15 @@ if __name__ == '__main__':
                         default='yes',
                         choices=['yes', 'no'],
                         help='Compute mean entropy.')
+    parser.add_argument('--mi', type=str,
+                        default='no',
+                        choices=['yes', 'no'],
+                        help='If true, we optimize the in-domain for each domain. If false optimize all domain as one.')
+    parser.add_argument('--ms', type=str,
+                        default='no',
+                        choices=['yes', 'no'],
+                        help='If true, we optimize the cross-domain for each domain. If false optimize all domain as '
+                             'one.')
 
     # --------- MoCo settings
     parser.add_argument('--moco-dim', default=128, type=int,
