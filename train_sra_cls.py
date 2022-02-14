@@ -102,7 +102,7 @@ if __name__ == '__main__':
     parser.add_argument('--name', type=str,
                         default='',
                         choices=[
-                            'kather19', 'crctp', 'crctp-cstr+kather19'
+                            'kather19', 'crctp-cstr+kather19'
                         ],
                         help='Name of the dataset.')
     parser.add_argument('--root', type=str,
