@@ -297,7 +297,7 @@ If you use this work, please use the following citations :).
 # Multi-source domain adaptation (a generalization of previous work to multi-source domains)
 @article{
     abbet2021selfrulemulti,
-    title={Self-Rule to Adapt: Generalized Multi-source Feature Learning Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Detection},
+    title={Self-Rule to Multi-Adapt: Generalized Multi-source Feature Learning Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Detection},
     author={Christian Abbet and Linda Studer and Andreas Fischer and Heather Dawson and Inti Zlobec and Behzad Bozorgtabar and Jean-Philippe Thiran},
     journal={arXiv preprint arXiv:2108.09178},
     year={2021}
