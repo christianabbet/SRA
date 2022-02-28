@@ -112,7 +112,7 @@ def plot_classification(
         orientation='vertical',  # orientation of the colorbar
         boundaries=np.arange(len(cls_new_labels) + 1) - 0.5  # Span range for color
     )
-    cax.set_ticks(np.arange(len(cls_new_labels) + 1))  # Define ticks position (center of colors)
+    cax.set_ticks(np.arange(len(cls_new_labels)))  # Define ticks position (center of colors)
     cax.set_ticklabels(cls_new_labels)  # Define names of labels
 
     # Save plot
