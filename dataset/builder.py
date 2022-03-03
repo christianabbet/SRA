@@ -18,11 +18,8 @@ def dataset_selection(
     name: str
         Name of the dataset. Should be one of
         'kather19'            : 9 classes with [ADI, BACK, DEB, LYM, MUC, MUS, NORM, STR, TUM]
-        'crctp'               : 7 classes with [NORM', CSTR, DEB, LYM, MUS, STR, TUM]
-        'crctp:cstr'          : 2 classes with [ALL, CSTR]
-        'crctp:tum'           : 2 classes with [ALL, TUM]
         'crctp+kather19'      : 10 classes with [ADI, BACK, DEB, LYM, MUC, MUS, NORM, STR, TUM, CSTR]
-        'crctp+kather19:cstr' : 2 classes with [ALL, CSTR]
+        'custom'              : Your classes
     path: str
         Path tot the dataset. When feeding two dataset path should be composed as 'path1:path2', where path1 is the
         path to the first dataset and path2 the path to the second one.
@@ -75,6 +72,12 @@ def dataset_selection(
 
         cls_labels = merge_classes(d_train_1.class_to_idx, d_train_2.class_to_idx)
         return ConcatDataset((d_train_1, d_train_2)), ConcatDataset((d_val_1, d_val_2)), list(cls_labels.keys())
+
+    elif name == 'custom':
+        return build_dataset(path=path, transform_train=transform_train, transform_val=transform_val,
+                             remap=None, **kwargs)
+    else:
+        raise NotImplementedError('Unknown dataset type: {}'.format(name))
 
 
 def merge_classes(cls_map_1: dict, cls_map_2: dict) -> dict:
