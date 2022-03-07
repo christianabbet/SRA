@@ -67,6 +67,5 @@ if __name__ == '__main__':
                         help='Size limit for WSIs (in MB). Could be useful to avoid low res images.')
     args = parser.parse_args()
 
-    # Load config file
-
+    # Run dataset creation
     main(args.data_query, args.export, args.n_subset, args.size_limit)
