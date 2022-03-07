@@ -129,8 +129,8 @@ def main(
 
             # Save results
             data = {
-                'name': os.path.basename(wsi_path),
-                'wsi_path': wsi_path,
+                'name': os.path.basename(p),
+                'wsi_path': p,
                 'model_path': model_path,
                 'dataset_name': config['dataset']['name'],
                 'classification_labels': config['dataset']['cls_labels'],
