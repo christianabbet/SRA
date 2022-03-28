@@ -339,6 +339,49 @@ class SRA(nn.Module):
 
         return loss_ind, loss_crd, logits_ind, labels_ind, h_crd
 
+    def compute_loss_moco(self, q, k, queue):
+        """
+         Compute the loss of the MoCo model. D is the number of datasets. Ni is the number of sample
+         from the i-th dataset and Qi the number of negative linked to the i-th dataset.
+
+         Parameters
+         ----------
+         q: Tensor of shape (B, Z)
+             Embedding of query images.
+         k: Tensor of shape (B, Z)
+             Embedding of batch images.
+         queue: Tensor of shape (Z, K)
+             Queue of previously computed negative examples.
+
+         Returns
+         -------
+         loss: Tensor (1,)
+             MoCo loss
+        logits_ind: List of Tensor of shape (D, Ni, Qi)
+            Computed logits (non normalized probabilities).
+        labels_ind: List od Tensor of shape (D, Ni)
+            Labels for the logit. List of 0s.
+         """
+
+        # compute logits
+        # Einstein sum is more intuitive
+        # positive logits: Nx1
+        l_pos = torch.einsum('nc,nc->n', [q, k]).unsqueeze(-1)
+        # negative logits: NxK
+        l_neg = torch.einsum('nc,ck->nk', [q, queue])
+
+        # logits: Nx(1+K)
+        logits = torch.cat([l_pos, l_neg], dim=1)
+
+        # apply temperature
+        logits /= self.T
+
+        # labels: positive key indicators
+        labels = torch.zeros(logits.shape[0], dtype=torch.long).cuda()
+
+        # dequeue and enqueue
+        return self.criterion(logits, labels), [logits], [labels]
+
 
 class SRACls(nn.Module):
     """

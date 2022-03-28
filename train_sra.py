@@ -28,6 +28,7 @@ def main(args):
     use_lind = bool(args.lind == 'yes')
     use_lcrd = bool(args.lcrd == 'yes')
     use_e2h = bool(args.e2h == 'yes')
+    use_moco = bool(args.moco == 'yes')
     use_me = bool(args.me == 'yes')
     mi = bool(args.mi == 'yes')
     ms = bool(args.ms == 'yes')
@@ -81,6 +82,7 @@ def main(args):
         use_lind=use_lind,
         use_lcrd=use_lcrd,
         use_e2h=use_e2h,
+        use_moco=use_moco,
         opt_lr=args.lr,
         opt_momentum=args.momentum,
         opt_weight_decay=args.wd,
@@ -135,6 +137,10 @@ if __name__ == '__main__':
                         help='Simple to hard width for step function update')
     parser.add_argument('--checkpoint_epochs', default=50, type=int,
                         help='manual epoch number (useful on restarts)')
+    parser.add_argument('--moco', type=str,
+                        default='no',
+                        choices=['yes', 'no'],
+                        help='Use moco loss')
     parser.add_argument('--lind', type=str,
                         default='yes',
                         choices=['yes', 'no'],
