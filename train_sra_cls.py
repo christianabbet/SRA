@@ -91,6 +91,10 @@ def main(args):
 
     trainer.train(n_epochs=args.epochs)
 
+    # dataset_train.transform = get_supervised_val_augmentation()
+    # y_embedding, y_cgt = trainer.build_support()
+    # np.save('{}_support.npy'.format(args.exp_name), {'embedding': y_embedding, 'labels': y_cgt})
+
 
 if __name__ == '__main__':
     """
@@ -126,7 +130,7 @@ if __name__ == '__main__':
                         help='initial learning rate', dest='lr')
     parser.add_argument('--seed', default=0, type=int,
                         help='Seed for data loaders')
-    parser.add_argument('--fraction', default=0.01, type=float,
+    parser.add_argument('--fraction', default=1.00, type=float,
                         help='Percentage of labels')
     parser.add_argument('--j', default=4, type=int,
                         help='number of data loading workers (default: 4)')

@@ -10,6 +10,7 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 from tqdm import tqdm
 from typing import Tuple, Iterable, Optional
 from sklearn.metrics import f1_score
+import torch.nn as nn
 
 
 class SRAClsTrainer:
@@ -293,3 +294,34 @@ class SRAClsTrainer:
         torch.save({
             'model_state_dict': self.model.state_dict(),
         }, path)
+
+    def build_support(self):
+        """
+        Evaluate model on dataset
+
+        Returns
+        -------
+        y_preds: ndarray
+            Output prediction probabilities.
+        y_labels: ndarray
+            Classes ground truth.
+        """
+
+        self.model.eval()
+
+        y_embedding = []
+        y_labels = []
+
+        for x_img, y_label in tqdm(self.train_loader, desc='support'):
+            # Use cuda or not
+            x_img = x_img.to(self.device)
+            y_label = y_label.to(self.device)
+
+            # Calculate loss and metrics
+            _, y_pred = self.model.embed(x_img)
+
+            # Append accuracy and loss
+            y_embedding.extend(y_pred.detach().cpu().numpy())
+            y_labels.extend(y_label.detach().cpu().numpy())
+
+        return np.array(y_embedding), np.array(y_labels)

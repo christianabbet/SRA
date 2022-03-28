@@ -397,6 +397,35 @@ class SRACls(nn.Module):
         y = self.encoder_q(im)  # queries: NxC
         return y
 
+    def embed(self, im):
+        """
+        Forward path for input image im_q and im_k. Here we define B = Batch size, H = height of the image, W = width
+        of the image, N_cls = number of output classes.
+
+        Parameters
+        ----------
+        im: Tensor of shape (B, 3, H, W)
+            A batch of images.
+
+        Returns
+        -------
+        y: Tensor of shape (B, n_cls)
+            Embedding of query images.
+        """
+
+        # compute query features and normalize
+        z = self.encoder_q.conv1(im)
+        z = self.encoder_q.bn1(z)
+        z = self.encoder_q.relu(z)
+        z = self.encoder_q.maxpool(z)
+        z = self.encoder_q.layer1(z)
+        z = self.encoder_q.layer2(z)
+        z = self.encoder_q.layer3(z)
+        z = self.encoder_q.layer4(z)
+        z = self.encoder_q.avgpool(z)  # queries: NxC
+        y = self.encoder_q.fc(z.squeeze())  # queries: NxC
+        return y, z.squeeze()
+
 
 class ResNetCls(nn.Module):
     """

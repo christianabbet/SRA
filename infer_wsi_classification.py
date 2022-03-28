@@ -76,6 +76,15 @@ def main(
     model.to(device)
     model.eval()
 
+    if os.path.exists(args.model_support):
+        support = np.load(args.model_support, allow_pickle=True).item()
+        y_support, z_support = support['labels'], support['embedding']
+        z_support = z_support / np.linalg.norm(z_support, axis=1, keepdims=True)
+        # z_support = torch.tensor(z_support).to(device)
+        # y_support = torch.tensor(y_support).to(device)
+    else:
+        y_support, z_support = None, None
+
     # Check if classification exists, otherwise compute it
     if os.path.exists(wsi_path):
         wsis_path = [wsi_path]
@@ -104,6 +113,7 @@ def main(
 
             # Compute classification
             classification = []
+            outliers = []
             metadata = []
 
             for crops, metas in tqdm(loader):
@@ -118,7 +128,16 @@ def main(
 
                 # Infer class probabilities
                 with torch.no_grad():
-                    y_pred = model(crops)
+                    y_pred, y_embed = model.embed(crops)
+                    y_embed = y_embed / torch.norm(y_embed, dim=1, keepdim=True)
+                    if y_support is not None:
+                        z_outliers = compute_outliers(
+                            y_pred=y_pred.cpu().numpy(),
+                            y_embed=y_embed.cpu().numpy(),
+                            y_support=y_support,
+                            z_support=z_support
+                        )
+                        outliers.extend(z_outliers)
 
                 # Extend results
                 classification.extend(y_pred.cpu().numpy())
@@ -135,6 +154,7 @@ def main(
                 'dataset_name': config['dataset']['name'],
                 'classification_labels': config['dataset']['cls_labels'],
                 'classification': np.array(classification),
+                'outliers': np.array(outliers),
                 'metadata_labels': ['mag', 'level', 'tx', 'ty', 'cx', 'cy', 'bx', 'by', 's_src', 's_tar'],
                 'metadata': np.array(metadata),
             }
@@ -158,6 +178,31 @@ def main(
                     coords_x=data['metadata'][:, 4],
                     coords_y=data['metadata'][:, 5],
                     cls=np.argmax(data['classification'], axis=1),
+                    cls_labels=data['classification_labels'],
+                    wsi_dim=wsi.level_dimensions[0],
+                    save_path=img_path,
+                    cmap=data.get('dataset_name', config['dataset']['name']),  # For old version of *.npy files
+                )
+
+                from model.utils import build_prediction_map
+                import matplotlib.pyplot as plt
+                from scipy.special import softmax
+                # map = build_prediction_map(data['metadata'][:, 4], data['metadata'][:, 5],  data['outliers'][:, None], wsi_dim=None)[:, :, 0]
+                # v_max = data['outliers']
+                v_max = softmax(data['classification'], axis=1).max(axis=1, keepdims=True)
+                v_cls = softmax(data['classification'], axis=1).argmax(axis=1)[:, None]
+                id_max = (v_max > 0.75).flatten()
+                map = build_prediction_map(data['metadata'][id_max, 4], data['metadata'][id_max, 5], v_cls[id_max], wsi_dim=None)[:, :, 0]
+                plt.imshow(map, vmin=0, vmax=1)
+                plt.colorbar()
+                plt.savefig('test.png')
+                plt.close()
+
+                plot_classification(
+                    image=thumbnail,
+                    coords_x=data['metadata'][id_max, 4],
+                    coords_y=data['metadata'][id_max, 5],
+                    cls=np.argmax(data['classification'], axis=1)[id_max],
                     cls_labels=data['classification_labels'],
                     wsi_dim=wsi.level_dimensions[0],
                     save_path=img_path,
@@ -205,6 +250,44 @@ def main(
             raise FileNotFoundError
 
 
+def compute_outliers(y_pred, y_embed, y_support, z_support):
+
+    y_cls = np.argmax(y_pred, axis=1)
+    z_outlier = []
+
+    for i in range(y_cls.shape[0]):
+        z_cls = z_support[y_cls[i] == y_support]
+        z_conf = np.mean(np.dot(z_cls, y_embed[i]))
+        z_outlier.append(z_conf)
+
+    return z_outlier
+
+
+def compute_mahalanobis_distances(train_features : torch.Tensor, test_features : torch.Tensor) -> np.ndarray:
+    """Compute mahalanobis distances of each test sample with respect to the training distributions
+
+    Args:
+        train_features (torch.Tensor): tensor of training features
+        test_features (torch.Tensor): tensor of test features
+
+    Returns:
+        np.ndarray: array of mahalanobis distances
+    """
+
+    # fitting a multivariate gaussian to the training features
+    mean = torch.mean(train_features.squeeze(), dim=0).cpu().detach().numpy()
+    # covariance estimation by using the Ledoit. Wolf et al. method
+    cov = torch.cov(train_features.squeeze().cpu().detach().numpy())
+
+    # Compute mahalanobis distance of test features with respect to the training space
+    cov_inv = np.linalg.inv(cov)
+    diffs = test_features.numpy() - mean.reshape((1,-1))
+    second_powers = np.matmul(diffs, cov_inv)*diffs
+
+    dist = np.sqrt(np.sum(second_powers, axis=1))
+
+    return dist
+
 if __name__ == '__main__':
     """
     Predict WSIs classification using model trained on a Dataset for all slides that match the query. The user can chose 
@@ -221,7 +304,10 @@ if __name__ == '__main__':
                         default='TCGA-CK-6747-01Z-00-DX1.7824596c-84db-4bee-b149-cd8f617c285f.svs',
                         help='Path to the WSI file (.mrxs, .svs).')
     parser.add_argument('--model_path', type=str,
-                        default='best_model_srma_cls_k19.pth',
+                        default='best_model_moco_cls_k19.pth',
+                        help='Path to the WSI file (.mrxs, .svs).')
+    parser.add_argument('--model_support', type=str,
+                        default='moco_cls_support.npy',
                         help='Path to the WSI file (.mrxs, .svs).')
     parser.add_argument('--config', type=str,
                         default='conf_wsi_classification_k19.yaml',
