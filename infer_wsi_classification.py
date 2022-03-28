@@ -93,13 +93,15 @@ def main(
             numpy_path = os.path.join(output_dir, os.path.basename(p) + '_{}.npy'.format(exp_name))
             img_path = os.path.join(output_dir, os.path.basename(p) + '_{}.png'.format(exp_name))
 
+            # Create output folder if existing
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir, exist_ok=True)
+
+            # Open WSI file
+            wsi = load_wsi(p)
+
             if not os.path.exists(numpy_path) or args.force:
 
-                # Create output folder if existing
-                if not os.path.exists(output_dir):
-                    os.makedirs(output_dir, exist_ok=True)
-
-                wsi = load_wsi(p)
                 logger.debug("Run classification on image ...")
                 loader = DataLoader(dataset=wsi, batch_size=config['model']['batch_size'], num_workers=4,
                                     shuffle=False, pin_memory=True)
