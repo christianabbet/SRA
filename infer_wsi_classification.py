@@ -93,7 +93,8 @@ def main(
             numpy_path = os.path.join(output_dir, os.path.basename(p) + '_{}.npy'.format(exp_name))
             img_path = os.path.join(output_dir, os.path.basename(p) + '_{}.png'.format(exp_name))
 
-            if not os.path.exists(numpy_path):
+            if not os.path.exists(numpy_path) or args.force:
+
                 # Create output folder if existing
                 if not os.path.exists(output_dir):
                     os.makedirs(output_dir, exist_ok=True)
@@ -236,6 +237,9 @@ if __name__ == '__main__':
     parser.add_argument('-qupath',
                         action='store_true',
                         help='Add argument to create qupath detection as JSON')
+    parser.add_argument('-force',
+                        action='store_true',
+                        help='If added, force the computation of WSIs even if output already exists')
 
     args = parser.parse_args()
 
