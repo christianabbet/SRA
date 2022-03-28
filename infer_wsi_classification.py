@@ -93,52 +93,53 @@ def main(
             numpy_path = os.path.join(output_dir, os.path.basename(p) + '_{}.npy'.format(exp_name))
             img_path = os.path.join(output_dir, os.path.basename(p) + '_{}.png'.format(exp_name))
 
-            # Create output folder if existing
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir, exist_ok=True)
+            if not os.path.exists(numpy_path):
+                # Create output folder if existing
+                if not os.path.exists(output_dir):
+                    os.makedirs(output_dir, exist_ok=True)
 
-            wsi = load_wsi(p)
-            logger.debug("Run classification on image ...")
-            loader = DataLoader(dataset=wsi, batch_size=config['model']['batch_size'], num_workers=4,
-                                shuffle=False, pin_memory=True)
+                wsi = load_wsi(p)
+                logger.debug("Run classification on image ...")
+                loader = DataLoader(dataset=wsi, batch_size=config['model']['batch_size'], num_workers=4,
+                                    shuffle=False, pin_memory=True)
 
-            # Compute classification
-            classification = []
-            metadata = []
+                # Compute classification
+                classification = []
+                metadata = []
 
-            for crops, metas in tqdm(loader):
+                for crops, metas in tqdm(loader):
 
-                # Only consider first magnification with meta data
-                crops = crops[0]
-                [mag, level, tx, ty, cx, cy, bx, by, s_src, s_tar] = metas[0]
+                    # Only consider first magnification with meta data
+                    crops = crops[0]
+                    [mag, level, tx, ty, cx, cy, bx, by, s_src, s_tar] = metas[0]
 
-                # Send to cuda is available
-                if use_cuda:
-                    crops = crops.cuda()
+                    # Send to cuda is available
+                    if use_cuda:
+                        crops = crops.cuda()
 
-                # Infer class probabilities
-                with torch.no_grad():
-                    y_pred = model(crops)
+                    # Infer class probabilities
+                    with torch.no_grad():
+                        y_pred = model(crops)
 
-                # Extend results
-                classification.extend(y_pred.cpu().numpy())
-                metadata.extend(
-                    np.array([mag.numpy(), level.numpy(), tx.numpy(), ty.numpy(), cx.numpy(), cy.numpy(), bx.numpy(),
-                              by.numpy(), s_src.numpy(), s_tar.numpy()]).T
-                )
+                    # Extend results
+                    classification.extend(y_pred.cpu().numpy())
+                    metadata.extend(
+                        np.array([mag.numpy(), level.numpy(), tx.numpy(), ty.numpy(), cx.numpy(), cy.numpy(), bx.numpy(),
+                                  by.numpy(), s_src.numpy(), s_tar.numpy()]).T
+                    )
 
-            # Save results
-            data = {
-                'name': os.path.basename(p),
-                'wsi_path': p,
-                'model_path': model_path,
-                'dataset_name': config['dataset']['name'],
-                'classification_labels': config['dataset']['cls_labels'],
-                'classification': np.array(classification),
-                'metadata_labels': ['mag', 'level', 'tx', 'ty', 'cx', 'cy', 'bx', 'by', 's_src', 's_tar'],
-                'metadata': np.array(metadata),
-            }
-            np.save(file=numpy_path, arr=data)
+                # Save results
+                data = {
+                    'name': os.path.basename(p),
+                    'wsi_path': p,
+                    'model_path': model_path,
+                    'dataset_name': config['dataset']['name'],
+                    'classification_labels': config['dataset']['cls_labels'],
+                    'classification': np.array(classification),
+                    'metadata_labels': ['mag', 'level', 'tx', 'ty', 'cx', 'cy', 'bx', 'by', 's_src', 's_tar'],
+                    'metadata': np.array(metadata),
+                }
+                np.save(file=numpy_path, arr=data)
 
             # Reload data and plot results
             data = np.load(numpy_path, allow_pickle=True).item()
