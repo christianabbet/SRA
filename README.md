@@ -1,6 +1,8 @@
 # Pytorch implementation Self-Rule to Adapt (SRA):
 ## Self-Rule to Adapt: Generalized Multi-source Feature Learning Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Detection
 
+### [Lab](https://www.epfl.ch/labs/lts5/) | [Paper (June 2021)](https://openreview.net/forum?id=VO7asaS5GUk) | [Journal (May 2022)](https://www.sciencedirect.com/science/article/pii/S1361841522001207)
+
 Supervised learning is constrained by the availability of labeled data, which are especially expensive to acquire in 
 the field of digital pathology. Making use of open-source data for pre-training or using domain adaptation can be a 
 way to overcome this issue. However, pre-trained networks often fail to generalize to new test domains that are not 
@@ -16,8 +18,6 @@ from multi-source domains. We show that our proposed method outperforms baseline
 tissue type classification and further validate our approach on our in-house clinical cohort. The code and models are 
 available open-source:
 
-Link: [paper single-source (June 2021)](https://openreview.net/forum?id=VO7asaS5GUk), 
-[paper multi-source (January 2022)](https://arxiv.org/abs/2108.09178)
 
 ![Pipeline](figs/pipeline.png)
 
@@ -297,10 +297,13 @@ If you use this work, please use the following citations :).
 # Multi-source domain adaptation (a generalization of previous work to multi-source domains)
 @article{
     abbet2021selfrulemulti,
-    title={Self-Rule to Multi-Adapt: Generalized Multi-source Feature Learning Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Detection},
-    author={Christian Abbet and Linda Studer and Andreas Fischer and Heather Dawson and Inti Zlobec and Behzad Bozorgtabar and Jean-Philippe Thiran},
-    journal={arXiv preprint arXiv:2108.09178},
-    year={2021}
+    title = {Self-Rule to Multi-Adapt: Generalized Multi-source Feature Learning Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Detection},
+    journal = {Medical Image Analysis},
+    pages = {102473},
+    year = {2022},
+    issn = {1361-8415},
+    doi = {https://doi.org/10.1016/j.media.2022.102473},
+    author = {Christian Abbet and Linda Studer and Andreas Fischer and Heather Dawson and Inti Zlobec and Behzad Bozorgtabar and Jean-Philippe Thiran},
 }
 ```
 
