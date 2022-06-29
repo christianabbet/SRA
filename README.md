@@ -1,7 +1,7 @@
 # Pytorch implementation Self-Rule to Adapt (SRA):
 ## Self-Rule to Adapt: Generalized Multi-source Feature Learning Using Unsupervised Domain Adaptation for Colorectal Cancer Tissue Detection
 
-### [Lab](https://www.epfl.ch/labs/lts5/) | [Paper (June 2021)](https://openreview.net/forum?id=VO7asaS5GUk) | [Journal (May 2022)](https://www.sciencedirect.com/science/article/pii/S1361841522001207)
+### [Lab](https://www.epfl.ch/labs/lts5/) | [Paper (June 2021)](https://openreview.net/forum?id=VO7asaS5GUk) | [Journal (May 2022)](https://www.sciencedirect.com/science/article/pii/S1361841522001207) | [Application (April 2022)](https://openreview.net/forum?id=PMQZGFtItHJ)
 
 Supervised learning is constrained by the availability of labeled data, which are especially expensive to acquire in 
 the field of digital pathology. Making use of open-source data for pre-training or using domain adaptation can be a 
@@ -304,6 +304,16 @@ If you use this work, please use the following citations :).
     issn = {1361-8415},
     doi = {https://doi.org/10.1016/j.media.2022.102473},
     author = {Christian Abbet and Linda Studer and Andreas Fischer and Heather Dawson and Inti Zlobec and Behzad Bozorgtabar and Jean-Philippe Thiran},
+}
+
+# Applicatio to Tumor-Stroma ratio quantification
+@inproceedings{
+   abbet2022toward,
+   title={Toward Automatic Tumor-Stroma Ratio Assessment for Survival Analysis in Colorectal Cancer},
+   author={Christian Abbet and Linda Studer and Inti Zlobec and Jean-Philippe Thiran},
+   booktitle={Medical Imaging with Deep Learning},
+   year={2022},
+   url={https://openreview.net/forum?id=PMQZGFtItHJ}
 }
 ```
 
