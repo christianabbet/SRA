@@ -133,6 +133,7 @@ Here is a non-exhaustive list of the publicly available dataset of colorectal ti
 </table>
   
 You can download the previous dataset using the commands:
+[Dec 2023] !!! The CRCTP is not publicly available anymore !!!
 ```bash
 # Create data folder
 mkdir data
@@ -147,7 +148,7 @@ wget -O NCT-CRC-HE-100K.zip https://zenodo.org/record/1214456/files/NCT-CRC-HE-1
 unzip NCT-CRC-HE-100K.zip && rm NCT-CRC-HE-100K.zip
 mv NCT-CRC-HE-100K data
 
-# Download CRCTP training/test data
+# Download CRCTP training/test data (Before Dec 2023)
 wget -O fold2.zip https://warwick.ac.uk/fac/cross_fac/tia/data/crc-tp/fold2.zip
 7z x fold2.zip && rm fold2.zip
 mv Fold2 data/CRCTP
