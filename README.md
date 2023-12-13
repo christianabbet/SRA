@@ -131,9 +131,12 @@ Here is a non-exhaustive list of the publicly available dataset of colorectal ti
     <td><a href="https://www.sciencedirect.com/science/article/pii/S136184152030061X">paper</a></td>
   </tr>
 </table>
-  
-You can download the previous dataset using the commands:
+
 [Dec 2023] !!! The CRCTP is not publicly available anymore !!!
+
+
+You can download the previous dataset using the commands:
+
 ```bash
 # Create data folder
 mkdir data
